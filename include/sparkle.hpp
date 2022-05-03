@@ -124,4 +124,61 @@ diffusion_layer_6(uint32_t* const state)
   state[5] = t0;
 }
 
+// Diffusion Layer `ℒ8`, used when branch count = 8 i.e. permutation state
+// is 512 ( = 32 * (8 * 2) ) -bit wide
+//
+// See algorithm 2.6 of Sparkle Specification
+// https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
+static inline void
+diffusion_layer_8(uint32_t* const state)
+{
+  // feistel round
+
+  uint32_t tx = state[0] ^ state[2] ^ state[4] ^ state[6];
+  uint32_t ty = state[1] ^ state[3] ^ state[5] ^ state[7];
+
+  tx = std::rotl(tx ^ (tx << 16), 16);
+  ty = std::rotl(ty ^ (ty << 16), 16);
+
+  state[9] = state[9] ^ state[1] ^ tx;
+  state[11] = state[11] ^ state[3] ^ tx;
+  state[13] = state[13] ^ state[5] ^ tx;
+  state[15] = state[15] ^ state[7] ^ tx;
+
+  state[8] = state[8] ^ state[0] ^ ty;
+  state[10] = state[10] ^ state[2] ^ ty;
+  state[12] = state[12] ^ state[4] ^ ty;
+  state[14] = state[14] ^ state[6] ^ ty;
+
+  // branch permutation
+
+  uint32_t t0 = state[8];
+  uint32_t t1 = state[10];
+  uint32_t t2 = state[12];
+  uint32_t t3 = state[14];
+
+  state[8] = state[0];
+  state[10] = state[2];
+  state[12] = state[4];
+  state[14] = state[6];
+  state[0] = t1;
+  state[2] = t2;
+  state[4] = t3;
+  state[6] = t0;
+
+  t0 = state[9];
+  t1 = state[11];
+  t2 = state[13];
+  t3 = state[15];
+
+  state[9] = state[1];
+  state[11] = state[3];
+  state[13] = state[5];
+  state[15] = state[7];
+  state[1] = t1;
+  state[3] = t2;
+  state[5] = t3;
+  state[7] = t0;
+}
+
 }
