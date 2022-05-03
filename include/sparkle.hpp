@@ -20,9 +20,8 @@ constexpr uint32_t CONST[8] = { 0xB7E15162u, 0xBF715880u, 0x38B4DA56u,
 //
 // See section 2.1.1 of Sparkle Specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
-template<const uint32_t c>
 static inline std::pair<uint32_t, uint32_t>
-alzette(const uint32_t x, const uint32_t y)
+alzette(const uint32_t x, const uint32_t y, const uint32_t c)
 {
   uint32_t lw = x + std::rotr(y, 31);
   uint32_t rw = y ^ std::rotr(lw, 24);
@@ -208,81 +207,69 @@ sparkle(uint32_t* const state)
     state[3] = state[3] ^ static_cast<uint32_t>(i);
 
     if constexpr (nb == 4ul) {
-      const auto p0 = alzette<CONST[0]>(state[0], state[1]);
-      state[0] = p0.first;
-      state[1] = p0.second;
+#if defined __clang__
+#pragma unroll 4
+#elif defined __GNUG__
+#pragma GCC unroll 4
+#endif
+      for (size_t i = 0; i < 4; i++) {
+        const size_t x_idx = i << 1;
+        const size_t y_idx = x_idx ^ 1ul;
 
-      const auto p1 = alzette<CONST[1]>(state[2], state[3]);
-      state[2] = p1.first;
-      state[3] = p1.second;
+        const auto p = alzette(state[x_idx], state[y_idx], CONST[i]);
 
-      const auto p2 = alzette<CONST[2]>(state[4], state[5]);
-      state[4] = p2.first;
-      state[5] = p2.second;
-
-      const auto p3 = alzette<CONST[3]>(state[6], state[7]);
-      state[6] = p3.first;
-      state[7] = p3.second;
+        state[x_idx] = p.first;
+        state[y_idx] = p.second;
+      }
 
       diffusion_layer_4(state);
     } else if constexpr (nb == 6ul) {
-      const auto p0 = alzette<CONST[0]>(state[0], state[1]);
-      state[0] = p0.first;
-      state[1] = p0.second;
+#if defined __clang__
+#pragma unroll 4
+#elif defined __GNUG__
+#pragma GCC unroll 4
+#endif
+      for (size_t i = 0; i < 4; i++) {
+        const size_t x_idx = i << 1;
+        const size_t y_idx = x_idx ^ 1ul;
 
-      const auto p1 = alzette<CONST[1]>(state[2], state[3]);
-      state[2] = p1.first;
-      state[3] = p1.second;
+        const auto p = alzette(state[x_idx], state[y_idx], CONST[i]);
 
-      const auto p2 = alzette<CONST[2]>(state[4], state[5]);
-      state[4] = p2.first;
-      state[5] = p2.second;
+        state[x_idx] = p.first;
+        state[y_idx] = p.second;
+      }
 
-      const auto p3 = alzette<CONST[3]>(state[6], state[7]);
-      state[6] = p3.first;
-      state[7] = p3.second;
+#if defined __clang__
+#pragma unroll 2
+#elif defined __GNUG__
+#pragma GCC unroll 2
+#endif
+      for (size_t i = 0; i < 2; i++) {
+        const size_t x_idx = 8ul ^ (i << 1);
+        const size_t y_idx = x_idx ^ 1ul;
 
-      const auto p4 = alzette<CONST[4]>(state[8], state[9]);
-      state[8] = p4.first;
-      state[9] = p4.second;
+        const auto p = alzette(state[x_idx], state[y_idx], CONST[4ul ^ i]);
 
-      const auto p5 = alzette<CONST[5]>(state[10], state[11]);
-      state[10] = p5.first;
-      state[11] = p5.second;
+        state[x_idx] = p.first;
+        state[y_idx] = p.second;
+      }
 
       diffusion_layer_6(state);
     } else if constexpr (nb == 8ul) {
-      const auto p0 = alzette<CONST[0]>(state[0], state[1]);
-      state[0] = p0.first;
-      state[1] = p0.second;
+#if defined __clang__
+#pragma unroll 4
+#elif defined __GNUG__
+#pragma GCC unroll 4
+#endif
+      for (size_t i = 0; i < 8; i++) {
+        const size_t x_idx = i << 1;
+        const size_t y_idx = x_idx ^ 1ul;
 
-      const auto p1 = alzette<CONST[1]>(state[2], state[3]);
-      state[2] = p1.first;
-      state[3] = p1.second;
+        const auto p = alzette(state[x_idx], state[y_idx], CONST[i]);
 
-      const auto p2 = alzette<CONST[2]>(state[4], state[5]);
-      state[4] = p2.first;
-      state[5] = p2.second;
-
-      const auto p3 = alzette<CONST[3]>(state[6], state[7]);
-      state[6] = p3.first;
-      state[7] = p3.second;
-
-      const auto p4 = alzette<CONST[4]>(state[8], state[9]);
-      state[8] = p4.first;
-      state[9] = p4.second;
-
-      const auto p5 = alzette<CONST[5]>(state[10], state[11]);
-      state[10] = p5.first;
-      state[11] = p5.second;
-
-      const auto p6 = alzette<CONST[6]>(state[12], state[13]);
-      state[12] = p6.first;
-      state[13] = p6.second;
-
-      const auto p7 = alzette<CONST[7]>(state[14], state[15]);
-      state[14] = p7.first;
-      state[15] = p7.second;
+        state[x_idx] = p.first;
+        state[y_idx] = p.second;
+      }
 
       diffusion_layer_8(state);
     }
