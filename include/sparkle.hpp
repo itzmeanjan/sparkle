@@ -3,8 +3,17 @@
 #include <cstdint>
 #include <utility>
 
+using size_t = std::size_t;
+
 // Sparkle Permutation Family
 namespace sparkle {
+
+// Sparkle constants which are XORed into permutation state, see first four
+// lines of algorithm 2.{1, 2, 3} in Sparkle Specification
+// https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
+constexpr uint32_t CONST[8] = { 0xB7E15162u, 0xBF715880u, 0x38B4DA56u,
+                                0x324E7738u, 0xBB1185EBu, 0x4F7C7B57u,
+                                0xCFBFA1C8u, 0xC2B3293Du };
 
 // ARX-box Alzette is a 64 -bit block cipher used as one building block of
 // Sparkle Permutation
@@ -179,6 +188,105 @@ diffusion_layer_8(uint32_t* const state)
   state[3] = t2;
   state[5] = t3;
   state[7] = t0;
+}
+
+// Generic Sparkle Permutation Implementation, parameterized with # -of branches
+// ( i.e. in Sparkle256 it is 4, in Sparkle384 it is 6 & in Sparkle512 it is 8 )
+// and # -of steps ( i.e. whether slim/ big variant )
+//
+// See section 2.1 of Sparkle specification
+// https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
+//
+// For implementation specific details, I suggest going through
+// algorithm 2.1, 2.2 & 2.3 of above linked document.
+template<const size_t nb, const size_t ns>
+static inline void
+sparkle(uint32_t* const state)
+{
+  for (size_t i = 0; i < ns; i++) {
+    state[1] = state[1] ^ CONST[i & 7ul];
+    state[3] = state[3] ^ static_cast<uint32_t>(i);
+
+    if constexpr (nb == 4ul) {
+      const auto p0 = alzette<CONST[0]>(state[0], state[1]);
+      state[0] = p0.first;
+      state[1] = p0.second;
+
+      const auto p1 = alzette<CONST[1]>(state[2], state[3]);
+      state[2] = p1.first;
+      state[3] = p1.second;
+
+      const auto p2 = alzette<CONST[2]>(state[4], state[5]);
+      state[4] = p2.first;
+      state[5] = p2.second;
+
+      const auto p3 = alzette<CONST[3]>(state[6], state[7]);
+      state[6] = p3.first;
+      state[7] = p3.second;
+
+      diffusion_layer_4(state);
+    } else if constexpr (nb == 6ul) {
+      const auto p0 = alzette<CONST[0]>(state[0], state[1]);
+      state[0] = p0.first;
+      state[1] = p0.second;
+
+      const auto p1 = alzette<CONST[1]>(state[2], state[3]);
+      state[2] = p1.first;
+      state[3] = p1.second;
+
+      const auto p2 = alzette<CONST[2]>(state[4], state[5]);
+      state[4] = p2.first;
+      state[5] = p2.second;
+
+      const auto p3 = alzette<CONST[3]>(state[6], state[7]);
+      state[6] = p3.first;
+      state[7] = p3.second;
+
+      const auto p4 = alzette<CONST[4]>(state[8], state[9]);
+      state[8] = p4.first;
+      state[9] = p4.second;
+
+      const auto p5 = alzette<CONST[5]>(state[10], state[11]);
+      state[10] = p5.first;
+      state[11] = p5.second;
+
+      diffusion_layer_6(state);
+    } else if constexpr (nb == 8ul) {
+      const auto p0 = alzette<CONST[0]>(state[0], state[1]);
+      state[0] = p0.first;
+      state[1] = p0.second;
+
+      const auto p1 = alzette<CONST[1]>(state[2], state[3]);
+      state[2] = p1.first;
+      state[3] = p1.second;
+
+      const auto p2 = alzette<CONST[2]>(state[4], state[5]);
+      state[4] = p2.first;
+      state[5] = p2.second;
+
+      const auto p3 = alzette<CONST[3]>(state[6], state[7]);
+      state[6] = p3.first;
+      state[7] = p3.second;
+
+      const auto p4 = alzette<CONST[4]>(state[8], state[9]);
+      state[8] = p4.first;
+      state[9] = p4.second;
+
+      const auto p5 = alzette<CONST[5]>(state[10], state[11]);
+      state[10] = p5.first;
+      state[11] = p5.second;
+
+      const auto p6 = alzette<CONST[6]>(state[12], state[13]);
+      state[12] = p6.first;
+      state[13] = p6.second;
+
+      const auto p7 = alzette<CONST[7]>(state[14], state[15]);
+      state[14] = p7.first;
+      state[15] = p7.second;
+
+      diffusion_layer_8(state);
+    }
+  }
 }
 
 }
