@@ -19,5 +19,5 @@ jobs:
       run: python3 -m pip install -r wrapper/python/requirements.txt --user
     - name: Execute tests
       run: make test_kat
-    - name: Clean t up
+    - name: Clean it up
       run: make clean
