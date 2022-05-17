@@ -6,12 +6,16 @@ BENCHMARK(esch256_hash)->Arg(128);
 BENCHMARK(esch256_hash)->Arg(256);
 BENCHMARK(esch256_hash)->Arg(512);
 BENCHMARK(esch256_hash)->Arg(1024);
+BENCHMARK(esch256_hash)->Arg(2048);
+BENCHMARK(esch256_hash)->Arg(4096);
 
 BENCHMARK(esch384_hash)->Arg(64);
 BENCHMARK(esch384_hash)->Arg(128);
 BENCHMARK(esch384_hash)->Arg(256);
 BENCHMARK(esch384_hash)->Arg(512);
 BENCHMARK(esch384_hash)->Arg(1024);
+BENCHMARK(esch384_hash)->Arg(2048);
+BENCHMARK(esch384_hash)->Arg(4096);
 
 // main function to drive execution of benchmark
 BENCHMARK_MAIN();
