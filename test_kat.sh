@@ -35,7 +35,7 @@ mv LWC_HASH_KAT_384.txt wrapper/python/
 pushd wrapper/python
 
 # run tests
-pytest -v
+python3 -m pytest -v
 
 # clean up
 rm LWC_*_KAT_*.txt
