@@ -40,40 +40,40 @@ feistel(uint32_t* const __restrict state, const uint32_t* const __restrict msg)
   // Note, in Esch256 sparkle permutation variant Sparkle384 is used
   // which has state bit width of 384
   if constexpr (state_w == 384ul) {
-    uint32_t tx = msg[0] ^ msg[2] ^ msg[4];
-    uint32_t ty = msg[1] ^ msg[3] ^ msg[5];
+    uint32_t tx = msg[0] ^ msg[2];
+    uint32_t ty = msg[1] ^ msg[3];
 
     tx = std::rotl(tx ^ (tx << 16), 16);
     ty = std::rotl(ty ^ (ty << 16), 16);
 
     state[0] ^= msg[0] ^ ty;
     state[2] ^= msg[2] ^ ty;
-    state[4] ^= msg[4] ^ ty;
+    state[4] ^= ty;
 
     state[1] ^= msg[1] ^ tx;
     state[3] ^= msg[3] ^ tx;
-    state[5] ^= msg[5] ^ tx;
+    state[5] ^= tx;
   }
   // This branch is taken when computing Esch384 hash
   //
   // Note, in Esch384 sparkle permutation variant Sparkle512 is used
   // which has state bit width of 512
   else if constexpr (state_w == 512ul) {
-    uint32_t tx = msg[0] ^ msg[2] ^ msg[4] ^ msg[6];
-    uint32_t ty = msg[1] ^ msg[3] ^ msg[5] ^ msg[7];
+    uint32_t tx = msg[0] ^ msg[2];
+    uint32_t ty = msg[1] ^ msg[3];
 
     tx = std::rotl(tx ^ (tx << 16), 16);
     ty = std::rotl(ty ^ (ty << 16), 16);
 
     state[0] ^= msg[0] ^ ty;
     state[2] ^= msg[2] ^ ty;
-    state[4] ^= msg[4] ^ ty;
-    state[6] ^= msg[6] ^ ty;
+    state[4] ^= ty;
+    state[6] ^= ty;
 
     state[1] ^= msg[1] ^ tx;
     state[3] ^= msg[3] ^ tx;
-    state[5] ^= msg[5] ^ tx;
-    state[7] ^= msg[7] ^ tx;
+    state[5] ^= tx;
+    state[7] ^= tx;
   }
 }
 

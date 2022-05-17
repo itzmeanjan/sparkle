@@ -34,6 +34,11 @@ hash(const uint8_t* const __restrict in, // input message
 
     std::memset(buffer + 4, 0, 8);
 
+#if defined __clang__
+#pragma unroll 4
+#elif defined __GNUG__
+#pragma GCC unroll 4
+#endif
     for (size_t j = 0; j < 4; j++) {
       const size_t i_off = j << 2;
 
@@ -80,6 +85,11 @@ hash(const uint8_t* const __restrict in, // input message
   hash::feistel<384ul>(state, buffer);
   sparkle::sparkle<6ul, 11ul>(state);
 
+#if defined __clang__
+#pragma unroll 4
+#elif defined __GNUG__
+#pragma GCC unroll 4
+#endif
   for (size_t i = 0; i < 4; i++) {
     const uint32_t word = state[i];
     const size_t b_off = i << 2;
@@ -92,6 +102,11 @@ hash(const uint8_t* const __restrict in, // input message
 
   sparkle::sparkle<6ul, 7ul>(state);
 
+#if defined __clang__
+#pragma unroll 4
+#elif defined __GNUG__
+#pragma GCC unroll 4
+#endif
   for (size_t i = 0; i < 4; i++) {
     const uint32_t word = state[i];
     const size_t b_off = i << 2;
