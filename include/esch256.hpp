@@ -68,7 +68,7 @@ hash(const uint8_t* const __restrict in, // input message
   const size_t off = rb_full_words << 2;
 
   for (size_t i = 0; i < rb_rem_bytes; i++) {
-    word |= static_cast<uint32_t>(in[b_off + off + i]) << ((3ul - i) << 3);
+    word |= static_cast<uint32_t>(in[b_off + off + i]) << (i << 3);
   }
 
   const uint32_t words[2] = { 0u, word };
