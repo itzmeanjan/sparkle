@@ -384,4 +384,41 @@ finalize(
   }
 }
 
+// Schwaemm256-128 authenticated encryption, which computes N (>=0) -bytes of
+// cipher text from equal many bytes of plain text, given 16 -bytes secret key,
+// 32 -bytes public message nonce & M (>=0 ) -bytes associated data ( never
+// encrypted )
+//
+// Schwaemm256-128 AEAD scheme provides confidentiality ( only for plain text ),
+// authenticity & integrity, which results into generation of 16 -bytes
+// authentication tag ( during encryption ), which must be checked for equality
+// ( during decryption ) before consuming decrypted bytes !
+//
+// See algorithm 2.13 of Sparkle Specification
+// https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
+static inline void
+encrypt(const uint8_t* const __restrict key,   // 16 -bytes secret key
+        const uint8_t* const __restrict nonce, // 32 -bytes nonce
+        const uint8_t* const __restrict data,  // N (>=0) -bytes associated data
+        const size_t d_len,                    // len(data) = N | N >= 0
+        const uint8_t* const __restrict txt,   // N (>=0) -bytes plain text
+        uint8_t* const __restrict enc,         // N (>=0) -bytes cipher text
+        const size_t ct_len,                   // len(txt) = len(enc) = N | >= 0
+        uint8_t* const __restrict tag          // 16 -bytes authentication tag
+)
+{
+  uint32_t state[12];
+
+  initialize(state, key, nonce);
+
+  if (d_len > 0) {
+    process_associated_data(state, data, d_len);
+  }
+  if (ct_len > 0) {
+    process_plain_text(state, txt, enc, ct_len);
+  }
+
+  finalize(state, key, tag);
+}
+
 }
