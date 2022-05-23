@@ -1,9 +1,8 @@
 #pragma once
 #include <bit>
+#include <cstddef>
 #include <cstdint>
 #include <utility>
-
-using size_t = std::size_t;
 
 // Sparkle Permutation Family
 namespace sparkle {
