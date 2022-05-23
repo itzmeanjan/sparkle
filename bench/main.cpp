@@ -1,3 +1,4 @@
+#include "bench_aead.hpp"
 #include "bench_hash.hpp"
 
 // registering Esch{256,384} functions for benchmark
@@ -16,6 +17,22 @@ BENCHMARK(esch384_hash)->Arg(512);
 BENCHMARK(esch384_hash)->Arg(1024);
 BENCHMARK(esch384_hash)->Arg(2048);
 BENCHMARK(esch384_hash)->Arg(4096);
+
+// registering Schwaemm256-128 AEAD encrypt/ decrypt routines for benchmark
+BENCHMARK(schwaemm256_128_encrypt)->Args({ 64, 32 });
+BENCHMARK(schwaemm256_128_decrypt)->Args({ 64, 32 });
+BENCHMARK(schwaemm256_128_encrypt)->Args({ 128, 32 });
+BENCHMARK(schwaemm256_128_decrypt)->Args({ 128, 32 });
+BENCHMARK(schwaemm256_128_encrypt)->Args({ 256, 32 });
+BENCHMARK(schwaemm256_128_decrypt)->Args({ 256, 32 });
+BENCHMARK(schwaemm256_128_encrypt)->Args({ 512, 32 });
+BENCHMARK(schwaemm256_128_decrypt)->Args({ 512, 32 });
+BENCHMARK(schwaemm256_128_encrypt)->Args({ 1024, 32 });
+BENCHMARK(schwaemm256_128_decrypt)->Args({ 1024, 32 });
+BENCHMARK(schwaemm256_128_encrypt)->Args({ 2048, 32 });
+BENCHMARK(schwaemm256_128_decrypt)->Args({ 2048, 32 });
+BENCHMARK(schwaemm256_128_encrypt)->Args({ 4096, 32 });
+BENCHMARK(schwaemm256_128_decrypt)->Args({ 4096, 32 });
 
 // main function to drive execution of benchmark
 BENCHMARK_MAIN();

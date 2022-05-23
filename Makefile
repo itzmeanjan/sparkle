@@ -6,7 +6,7 @@ IFLAGS = -I ./include
 all: test_kat
 
 lib:
-	$(CXX) $(CXXFLAGS) $(OPTFLAGS) $(IFLAGS) -fPIC --shared wrapper/esch.cpp -o wrapper/libesch.so
+	$(CXX) $(CXXFLAGS) $(OPTFLAGS) $(IFLAGS) -I . -fPIC --shared wrapper/sparkle.cpp -o wrapper/libsparkle.so
 
 clean:
 	find . -name '*.out' -o -name '*.o' -o -name '*.so' -o -name '*.gch' | xargs rm -rf
