@@ -79,51 +79,65 @@ make benchmark
 ### On ARM Cortex-A72
 
 ```bash
-2022-05-23T03:05:31+00:00
+2022-05-25T05:19:03+00:00
 Running ./bench/a.out
 Run on (16 X 166.66 MHz CPU s)
 CPU Caches:
   L1 Data 32 KiB (x16)
   L1 Instruction 48 KiB (x16)
   L2 Unified 2048 KiB (x4)
-Load Average: 0.08, 0.02, 0.01
+Load Average: 0.15, 0.03, 0.01
 ------------------------------------------------------------------------------------------
 Benchmark                                Time             CPU   Iterations UserCounters...
 ------------------------------------------------------------------------------------------
-esch256_hash/64                        881 ns          881 ns       794249 bytes_per_second=69.2735M/s
-esch256_hash/128                      1513 ns         1513 ns       462588 bytes_per_second=80.6717M/s
-esch256_hash/256                      2763 ns         2763 ns       253372 bytes_per_second=88.3704M/s
-esch256_hash/512                      5262 ns         5262 ns       133023 bytes_per_second=92.7964M/s
-esch256_hash/1024                    10260 ns        10260 ns        68224 bytes_per_second=95.181M/s
-esch256_hash/2048                    20257 ns        20257 ns        34556 bytes_per_second=96.4171M/s
-esch256_hash/4096                    40251 ns        40250 ns        17391 bytes_per_second=97.0488M/s
-esch384_hash/64                       2616 ns         2616 ns       267140 bytes_per_second=23.33M/s
-esch384_hash/128                      4213 ns         4213 ns       166156 bytes_per_second=28.9722M/s
-esch384_hash/256                      7404 ns         7404 ns        94532 bytes_per_second=32.9731M/s
-esch384_hash/512                     13788 ns        13788 ns        50769 bytes_per_second=35.414M/s
-esch384_hash/1024                    26558 ns        26558 ns        26358 bytes_per_second=36.7715M/s
-esch384_hash/2048                    52092 ns        52092 ns        13437 bytes_per_second=37.4941M/s
-esch384_hash/4096                   103175 ns       103174 ns         6784 bytes_per_second=37.8607M/s
-schwaemm256_128_encrypt/64/32         1218 ns         1218 ns       574663 bytes_per_second=75.1652M/s
-schwaemm256_128_decrypt/64/32         1211 ns         1211 ns       577705 bytes_per_second=75.5946M/s
-schwaemm256_128_encrypt/128/32        1667 ns         1667 ns       419746 bytes_per_second=91.5324M/s
-schwaemm256_128_decrypt/128/32        1658 ns         1658 ns       422066 bytes_per_second=92.0044M/s
-schwaemm256_128_encrypt/256/32        2574 ns         2574 ns       271901 bytes_per_second=106.691M/s
-schwaemm256_128_decrypt/256/32        2564 ns         2563 ns       273069 bytes_per_second=107.143M/s
-schwaemm256_128_encrypt/512/32        4371 ns         4371 ns       160140 bytes_per_second=118.687M/s
-schwaemm256_128_decrypt/512/32        4357 ns         4357 ns       160667 bytes_per_second=119.081M/s
-schwaemm256_128_encrypt/1024/32       7964 ns         7964 ns        87902 bytes_per_second=126.455M/s
-schwaemm256_128_decrypt/1024/32       7941 ns         7941 ns        88141 bytes_per_second=126.815M/s
-schwaemm256_128_encrypt/2048/32      15151 ns        15151 ns        46201 bytes_per_second=130.927M/s
-schwaemm256_128_decrypt/2048/32      15113 ns        15112 ns        46317 bytes_per_second=131.259M/s
-schwaemm256_128_encrypt/4096/32      29526 ns        29525 ns        23709 bytes_per_second=133.335M/s
-schwaemm256_128_decrypt/4096/32      29503 ns        29503 ns        23721 bytes_per_second=133.438M/s
+esch256_hash/64                        881 ns          881 ns       794001 bytes_per_second=69.2729M/s
+esch256_hash/128                      1513 ns         1513 ns       462583 bytes_per_second=80.6699M/s
+esch256_hash/256                      2763 ns         2763 ns       253369 bytes_per_second=88.3682M/s
+esch256_hash/512                      5262 ns         5262 ns       133024 bytes_per_second=92.7974M/s
+esch256_hash/1024                    10261 ns        10260 ns        68222 bytes_per_second=95.179M/s
+esch256_hash/2048                    20257 ns        20257 ns        34557 bytes_per_second=96.4195M/s
+esch256_hash/4096                    40250 ns        40250 ns        17391 bytes_per_second=97.049M/s
+esch384_hash/64                       2622 ns         2622 ns       266982 bytes_per_second=23.2801M/s
+esch384_hash/128                      4208 ns         4208 ns       166389 bytes_per_second=29.0099M/s
+esch384_hash/256                      7387 ns         7387 ns        94752 bytes_per_second=33.0496M/s
+esch384_hash/512                     13751 ns        13751 ns        50907 bytes_per_second=35.5098M/s
+esch384_hash/1024                    26476 ns        26476 ns        26438 bytes_per_second=36.8848M/s
+esch384_hash/2048                    51927 ns        51927 ns        13478 bytes_per_second=37.6129M/s
+esch384_hash/4096                   102833 ns       102832 ns         6807 bytes_per_second=37.9868M/s
+schwaemm256_128_encrypt/64/32         1217 ns         1217 ns       575040 bytes_per_second=75.2128M/s
+schwaemm256_128_decrypt/64/32         1211 ns         1211 ns       578018 bytes_per_second=75.6004M/s
+schwaemm256_128_encrypt/128/32        1667 ns         1667 ns       419937 bytes_per_second=91.5401M/s
+schwaemm256_128_decrypt/128/32        1659 ns         1659 ns       421998 bytes_per_second=91.9782M/s
+schwaemm256_128_encrypt/256/32        2574 ns         2574 ns       271968 bytes_per_second=106.713M/s
+schwaemm256_128_decrypt/256/32        2564 ns         2564 ns       272961 bytes_per_second=107.105M/s
+schwaemm256_128_encrypt/512/32        4371 ns         4371 ns       160151 bytes_per_second=118.7M/s
+schwaemm256_128_decrypt/512/32        4357 ns         4357 ns       160657 bytes_per_second=119.071M/s
+schwaemm256_128_encrypt/1024/32       7965 ns         7965 ns        87877 bytes_per_second=126.442M/s
+schwaemm256_128_decrypt/1024/32       7942 ns         7942 ns        88125 bytes_per_second=126.797M/s
+schwaemm256_128_encrypt/2048/32      15152 ns        15152 ns        46196 bytes_per_second=130.92M/s
+schwaemm256_128_decrypt/2048/32      15114 ns        15114 ns        46315 bytes_per_second=131.249M/s
+schwaemm256_128_encrypt/4096/32      29529 ns        29528 ns        23699 bytes_per_second=133.323M/s
+schwaemm256_128_decrypt/4096/32      29457 ns        29456 ns        23763 bytes_per_second=133.648M/s
+schwaemm192_192_encrypt/64/32         1602 ns         1602 ns       436916 bytes_per_second=57.1477M/s
+schwaemm192_192_decrypt/64/32         1656 ns         1656 ns       422575 bytes_per_second=55.2699M/s
+schwaemm192_192_encrypt/128/32        2238 ns         2238 ns       312715 bytes_per_second=68.1742M/s
+schwaemm192_192_decrypt/128/32        2284 ns         2284 ns       306416 bytes_per_second=66.8003M/s
+schwaemm192_192_encrypt/256/32        3296 ns         3296 ns       212353 bytes_per_second=83.3223M/s
+schwaemm192_192_decrypt/256/32        3357 ns         3356 ns       208546 bytes_per_second=81.8307M/s
+schwaemm192_192_encrypt/512/32        5606 ns         5606 ns       124843 bytes_per_second=92.5364M/s
+schwaemm192_192_decrypt/512/32        5676 ns         5676 ns       123316 bytes_per_second=91.3981M/s
+schwaemm192_192_encrypt/1024/32      10035 ns        10035 ns        69751 bytes_per_second=100.354M/s
+schwaemm192_192_decrypt/1024/32      10123 ns        10123 ns        69145 bytes_per_second=99.482M/s
+schwaemm192_192_encrypt/2048/32      19094 ns        19094 ns        36679 bytes_per_second=103.889M/s
+schwaemm192_192_decrypt/2048/32      19211 ns        19211 ns        36437 bytes_per_second=103.257M/s
+schwaemm192_192_encrypt/4096/32      37002 ns        37002 ns        18912 bytes_per_second=106.393M/s
+schwaemm192_192_decrypt/4096/32      37192 ns        37191 ns        18822 bytes_per_second=105.852M/s
 ```
 
 ### On Intel(R) Core(TM) i5-8279U CPU @ 2.40GHz
 
 ```bash
-2022-05-23T07:06:57+04:00
+2022-05-25T09:14:50+04:00
 Running ./bench/a.out
 Run on (8 X 2400 MHz CPU s)
 CPU Caches:
@@ -131,36 +145,50 @@ CPU Caches:
   L1 Instruction 32 KiB
   L2 Unified 256 KiB (x4)
   L3 Unified 6144 KiB
-Load Average: 2.68, 2.07, 1.95
+Load Average: 2.44, 2.99, 3.07
 ------------------------------------------------------------------------------------------
 Benchmark                                Time             CPU   Iterations UserCounters...
 ------------------------------------------------------------------------------------------
-esch256_hash/64                        939 ns          938 ns       716736 bytes_per_second=65.0594M/s
-esch256_hash/128                      1612 ns         1609 ns       430621 bytes_per_second=75.8489M/s
-esch256_hash/256                      2951 ns         2948 ns       237012 bytes_per_second=82.8129M/s
-esch256_hash/512                      5887 ns         5835 ns       119603 bytes_per_second=83.6799M/s
-esch256_hash/1024                    10983 ns        10973 ns        60503 bytes_per_second=88.997M/s
-esch256_hash/2048                    21654 ns        21638 ns        31526 bytes_per_second=90.2653M/s
-esch256_hash/4096                    43045 ns        43017 ns        16231 bytes_per_second=90.808M/s
-esch384_hash/64                       1245 ns         1244 ns       550414 bytes_per_second=49.0605M/s
-esch384_hash/128                      2156 ns         2154 ns       344637 bytes_per_second=56.6727M/s
-esch384_hash/256                      3705 ns         3703 ns       187342 bytes_per_second=65.9374M/s
-esch384_hash/512                      6749 ns         6746 ns       101830 bytes_per_second=72.3803M/s
-esch384_hash/1024                    12936 ns        12925 ns        51548 bytes_per_second=75.5564M/s
-esch384_hash/2048                    25143 ns        25134 ns        27553 bytes_per_second=77.7088M/s
-esch384_hash/4096                    49900 ns        49866 ns        13268 bytes_per_second=78.3347M/s
-schwaemm256_128_encrypt/64/32          998 ns          995 ns       703122 bytes_per_second=92.0351M/s
-schwaemm256_128_decrypt/64/32          972 ns          971 ns       711512 bytes_per_second=94.2929M/s
-schwaemm256_128_encrypt/128/32        1328 ns         1327 ns       518311 bytes_per_second=114.983M/s
-schwaemm256_128_decrypt/128/32        1320 ns         1320 ns       510975 bytes_per_second=115.623M/s
-schwaemm256_128_encrypt/256/32        2028 ns         2026 ns       340442 bytes_per_second=135.564M/s
-schwaemm256_128_decrypt/256/32        2025 ns         2024 ns       342016 bytes_per_second=135.728M/s
-schwaemm256_128_encrypt/512/32        3439 ns         3436 ns       203302 bytes_per_second=150.979M/s
-schwaemm256_128_decrypt/512/32        3424 ns         3423 ns       203513 bytes_per_second=151.564M/s
-schwaemm256_128_encrypt/1024/32       6344 ns         6340 ns       107744 bytes_per_second=158.836M/s
-schwaemm256_128_decrypt/1024/32       6265 ns         6257 ns       109472 bytes_per_second=160.962M/s
-schwaemm256_128_encrypt/2048/32      11881 ns        11873 ns        57751 bytes_per_second=167.074M/s
-schwaemm256_128_decrypt/2048/32      11859 ns        11852 ns        57528 bytes_per_second=167.374M/s
-schwaemm256_128_encrypt/4096/32      23032 ns        23022 ns        29890 bytes_per_second=171.002M/s
-schwaemm256_128_decrypt/4096/32      23331 ns        23313 ns        29942 bytes_per_second=168.864M/s
+esch256_hash/64                       1023 ns         1019 ns       686773 bytes_per_second=59.8979M/s
+esch256_hash/128                      1741 ns         1734 ns       398615 bytes_per_second=70.4087M/s
+esch256_hash/256                      3170 ns         3159 ns       215057 bytes_per_second=77.2799M/s
+esch256_hash/512                      6112 ns         6085 ns       113749 bytes_per_second=80.2416M/s
+esch256_hash/1024                    11856 ns        11818 ns        58298 bytes_per_second=82.6355M/s
+esch256_hash/2048                    23527 ns        23417 ns        30085 bytes_per_second=83.4066M/s
+esch256_hash/4096                    46682 ns        46425 ns        14846 bytes_per_second=84.1418M/s
+esch384_hash/64                       1363 ns         1356 ns       514827 bytes_per_second=45.0102M/s
+esch384_hash/128                      2211 ns         2196 ns       321483 bytes_per_second=55.5943M/s
+esch384_hash/256                      3853 ns         3831 ns       181496 bytes_per_second=63.7291M/s
+esch384_hash/512                      7142 ns         7099 ns        97712 bytes_per_second=68.785M/s
+esch384_hash/1024                    13771 ns        13692 ns        50575 bytes_per_second=71.3229M/s
+esch384_hash/2048                    26988 ns        26840 ns        25878 bytes_per_second=72.7681M/s
+esch384_hash/4096                    53581 ns        53324 ns        12812 bytes_per_second=73.2549M/s
+schwaemm256_128_encrypt/64/32         1043 ns         1038 ns       658805 bytes_per_second=88.2212M/s
+schwaemm256_128_decrypt/64/32         1054 ns         1048 ns       664546 bytes_per_second=87.3344M/s
+schwaemm256_128_encrypt/128/32        1428 ns         1420 ns       487859 bytes_per_second=107.432M/s
+schwaemm256_128_decrypt/128/32        1437 ns         1429 ns       484969 bytes_per_second=106.747M/s
+schwaemm256_128_encrypt/256/32        2178 ns         2168 ns       320690 bytes_per_second=126.688M/s
+schwaemm256_128_decrypt/256/32        2190 ns         2179 ns       320839 bytes_per_second=126.025M/s
+schwaemm256_128_encrypt/512/32        3689 ns         3670 ns       189309 bytes_per_second=141.359M/s
+schwaemm256_128_decrypt/512/32        3729 ns         3710 ns       189284 bytes_per_second=139.838M/s
+schwaemm256_128_encrypt/1024/32       6770 ns         6739 ns       103161 bytes_per_second=149.431M/s
+schwaemm256_128_decrypt/1024/32       6788 ns         6756 ns       100805 bytes_per_second=149.074M/s
+schwaemm256_128_encrypt/2048/32      12880 ns        12820 ns        54377 bytes_per_second=154.73M/s
+schwaemm256_128_decrypt/2048/32      12864 ns        12803 ns        54418 bytes_per_second=154.935M/s
+schwaemm256_128_encrypt/4096/32      24974 ns        24854 ns        27887 bytes_per_second=158.399M/s
+schwaemm256_128_decrypt/4096/32      24998 ns        24886 ns        28146 bytes_per_second=158.192M/s
+schwaemm192_192_encrypt/64/32         1407 ns         1401 ns       493834 bytes_per_second=65.3657M/s
+schwaemm192_192_decrypt/64/32         1419 ns         1413 ns       493702 bytes_per_second=64.8064M/s
+schwaemm192_192_encrypt/128/32        1963 ns         1955 ns       356957 bytes_per_second=78.0656M/s
+schwaemm192_192_decrypt/128/32        1979 ns         1969 ns       355279 bytes_per_second=77.4823M/s
+schwaemm192_192_encrypt/256/32        2877 ns         2863 ns       242796 bytes_per_second=95.9467M/s
+schwaemm192_192_decrypt/256/32        2899 ns         2886 ns       240556 bytes_per_second=95.1812M/s
+schwaemm192_192_encrypt/512/32        4945 ns         4922 ns       142583 bytes_per_second=105.396M/s
+schwaemm192_192_decrypt/512/32        4971 ns         4932 ns       135391 bytes_per_second=105.189M/s
+schwaemm192_192_encrypt/1024/32       8963 ns         8908 ns        78629 bytes_per_second=113.057M/s
+schwaemm192_192_decrypt/1024/32       8804 ns         8747 ns        76745 bytes_per_second=115.139M/s
+schwaemm192_192_encrypt/2048/32      16962 ns        16834 ns        41582 bytes_per_second=117.838M/s
+schwaemm192_192_decrypt/2048/32      16906 ns        16807 ns        41489 bytes_per_second=118.027M/s
+schwaemm192_192_encrypt/4096/32      32459 ns        32306 ns        21397 bytes_per_second=121.858M/s
+schwaemm192_192_decrypt/4096/32      33325 ns        33103 ns        21832 bytes_per_second=118.926M/s
 ```
