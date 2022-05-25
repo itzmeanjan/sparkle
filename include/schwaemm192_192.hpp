@@ -220,4 +220,114 @@ process_associated_data(
   sparkle::sparkle<6ul, 11ul>(state);
 }
 
+// Consumes non-empty plain text data into 384 -bit permutation state, while
+// producing equal many cipher text bytes, using algorithm 2.15 of Sparkle
+// specification
+// https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
+static inline void
+process_plain_text(
+  uint32_t* const __restrict state,    // 384 -bit permutation state
+  const uint8_t* const __restrict txt, // N (>0) -bytes plain text
+  uint8_t* const __restrict enc,       // N (>0) -bytes encrypted text
+  const size_t ct_len                  // len(txt) = len(enc) = N | N > 0
+)
+{
+  constexpr size_t RATE = 24;          // bytes
+  constexpr size_t RATE_W = RATE >> 2; // words
+
+  uint32_t buffer0[7];
+  uint32_t buffer1[6];
+
+  size_t r_bytes = ct_len;
+  while (r_bytes > RATE) {
+    const size_t b_off = ct_len - r_bytes;
+
+    for (size_t i = 0; i < RATE_W; i++) {
+      const size_t i_off = i << 2;
+
+      buffer0[i] = (static_cast<uint32_t>(txt[b_off + (i_off ^ 3)]) << 24) |
+                   (static_cast<uint32_t>(txt[b_off + (i_off ^ 2)]) << 16) |
+                   (static_cast<uint32_t>(txt[b_off + (i_off ^ 1)]) << 8) |
+                   (static_cast<uint32_t>(txt[b_off + (i_off ^ 0)]) << 0);
+    }
+
+    std::memcpy(buffer1, state, RATE);
+    rho2(buffer1, buffer0);
+
+    for (size_t i = 0; i < RATE_W; i++) {
+      const size_t i_off = i << 2;
+
+      enc[b_off + (i_off ^ 0)] = static_cast<uint8_t>(buffer1[i] >> 0);
+      enc[b_off + (i_off ^ 1)] = static_cast<uint8_t>(buffer1[i] >> 8);
+      enc[b_off + (i_off ^ 2)] = static_cast<uint8_t>(buffer1[i] >> 16);
+      enc[b_off + (i_off ^ 3)] = static_cast<uint8_t>(buffer1[i] >> 24);
+    }
+
+    rho1(state, buffer0);
+
+    for (size_t i = 0; i < (RATE >> 2); i++) {
+      state[i] ^= state[6ul + i];
+    }
+
+    sparkle::sparkle<6ul, 7ul>(state);
+
+    r_bytes -= RATE;
+  }
+
+  const size_t b_off = ct_len - r_bytes;
+  const size_t rb_full_words = r_bytes >> 2;
+  const size_t rb_rem_bytes = r_bytes & 3ul;
+  const size_t w_off = rb_full_words << 2;
+
+  std::memset(buffer0, 0, RATE);
+
+  for (size_t i = 0; i < rb_full_words; i++) {
+    const size_t i_off = i << 2;
+
+    buffer0[i] = (static_cast<uint32_t>(txt[b_off + (i_off ^ 3)]) << 24) |
+                 (static_cast<uint32_t>(txt[b_off + (i_off ^ 2)]) << 16) |
+                 (static_cast<uint32_t>(txt[b_off + (i_off ^ 1)]) << 8) |
+                 (static_cast<uint32_t>(txt[b_off + (i_off ^ 0)]) << 0);
+  }
+
+  uint32_t word = 0x80u << (rb_rem_bytes << 3);
+  for (size_t i = 0; i < rb_rem_bytes; i++) {
+    const size_t idx = b_off + w_off + i;
+
+    word |= static_cast<uint32_t>(txt[idx]) << (i << 3);
+  }
+
+  const uint32_t words[2] = { 0u, word };
+  buffer0[rb_full_words] = words[rb_full_words < RATE_W];
+
+  std::memcpy(buffer1, state, RATE);
+  rho2(buffer1, buffer0);
+
+  for (size_t i = 0; i < rb_full_words; i++) {
+    const size_t i_off = i << 2;
+
+    enc[b_off + (i_off ^ 0)] = static_cast<uint8_t>(buffer1[i] >> 0);
+    enc[b_off + (i_off ^ 1)] = static_cast<uint8_t>(buffer1[i] >> 8);
+    enc[b_off + (i_off ^ 2)] = static_cast<uint8_t>(buffer1[i] >> 16);
+    enc[b_off + (i_off ^ 3)] = static_cast<uint8_t>(buffer1[i] >> 24);
+  }
+
+  for (size_t i = 0; i < rb_rem_bytes; i++) {
+    const size_t idx = b_off + w_off + i;
+
+    enc[idx] = static_cast<uint8_t>(buffer1[rb_full_words] >> (i << 3));
+  }
+
+  rho1(state, buffer0);
+
+  constexpr uint32_t consts[2] = { CONST_M1, CONST_M0 };
+  state[11] ^= consts[rb_full_words < RATE_W];
+
+  for (size_t i = 0; i < (RATE >> 2); i++) {
+    state[i] ^= state[6ul + i];
+  }
+
+  sparkle::sparkle<6ul, 11ul>(state);
+}
+
 }
