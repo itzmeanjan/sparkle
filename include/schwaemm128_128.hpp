@@ -1,5 +1,6 @@
 #pragma once
 #include "sparkle.hpp"
+#include <cstring>
 
 // Schwaemm128-128 Authenticated Encryption with Associated Data ( AEAD ) Scheme
 namespace schwaemm128_128 {
@@ -54,6 +55,92 @@ initialize(uint32_t* const __restrict state,     // 256 -bit permutation state
   }
 
   sparkle::sparkle<4ul, 10ul>(state);
+}
+
+// FeistelSwap - invoked from combined feedback function `𝜌`,  which is used for
+// differentiating between cipher text & outer part of permutation state
+//
+// See section 2.3.2 of Sparkle specification
+// https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
+//
+// Note, `s` is 128 -bit wide i.e.
+//
+// `s1 || s2 = s` meaning |s1| = |s2| = RATE >> 1 = 64 -bit
+//
+// To be more specific, `s` is actually outer part of permutation state !
+static inline void
+feistel_swap(uint32_t* const __restrict s)
+{
+  std::swap(s[0], s[2]);
+  std::swap(s[1], s[3]);
+
+  s[2] ^= s[0];
+  s[3] ^= s[1];
+}
+
+// Feedback function `𝜌1`, used during Schwaemm128-128 Authenticated Encryption
+//
+// See section 2.3.2 of Sparkle Specification
+// https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
+static inline void
+rho1(uint32_t* const __restrict s,      // 128 -bit
+     const uint32_t* const __restrict d // 128 -bit
+)
+{
+  feistel_swap(s);
+
+  for (size_t i = 0; i < 4; i++) {
+    s[i] ^= d[i];
+  }
+}
+
+// Feedback function `𝜌2`, used during Schwaemm128-128 Authenticated Encryption
+//
+// See section 2.3.2 of Sparkle Specification
+// https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
+static inline void
+rho2(uint32_t* const __restrict s,      // 128 -bit
+     const uint32_t* const __restrict d // 128 -bit
+)
+{
+  for (size_t i = 0; i < 4; i++) {
+    s[i] ^= d[i];
+  }
+}
+
+// Inverse Feedback function `𝜌'1`, used during Schwaemm128-128 Verified
+// Decryption
+//
+// See section 2.3.2 of Sparkle Specification
+// https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
+static inline void
+rhoprime1(uint32_t* const __restrict s,      // 128 -bit
+          const uint32_t* const __restrict d // 128 -bit
+)
+{
+  uint32_t s_[4];
+  std::memcpy(s_, s, 16);
+
+  feistel_swap(s);
+
+  for (size_t i = 0; i < 4; i++) {
+    s[i] ^= s_[i] ^ d[i];
+  }
+}
+
+// Inverse Feedback function `𝜌'2`, used during Schwaemm128-128 Authenticated
+// Decryption
+//
+// See section 2.3.2 of Sparkle Specification
+// https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
+static inline void
+rhoprime2(uint32_t* const __restrict s,      // 128 -bit
+          const uint32_t* const __restrict d // 128 -bit
+)
+{
+  for (size_t i = 0; i < 4; i++) {
+    s[i] ^= d[i];
+  }
 }
 
 }
