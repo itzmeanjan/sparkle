@@ -455,4 +455,42 @@ process_cipher_text(
   sparkle::sparkle<4ul, 10ul>(state);
 }
 
+// Finalization step of Schwaemm128-128 AEAD, where 16 -bytes of authentication
+// tag is produced
+//
+// See algorithm 2.18 of Sparkle specification
+// https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
+static inline void
+finalize(
+  const uint32_t* const __restrict state, // 256 -bit of permutation state
+  const uint8_t* const __restrict key,    // 16 -bytes secret key
+  uint8_t* const __restrict tag           // 16 -bytes authentication tag
+)
+{
+  uint32_t buffer[4];
+
+  for (size_t i = 0; i < 4; i++) {
+    const size_t b_off = i << 2;
+
+    buffer[i] = (static_cast<uint32_t>(key[b_off ^ 3]) << 24) |
+                (static_cast<uint32_t>(key[b_off ^ 2]) << 16) |
+                (static_cast<uint32_t>(key[b_off ^ 1]) << 8) |
+                (static_cast<uint32_t>(key[b_off ^ 0]) << 0);
+  }
+
+  for (size_t i = 0; i < 4; i++) {
+    buffer[i] ^= state[4ul ^ i];
+  }
+
+  for (size_t i = 0; i < 4; i++) {
+    const size_t b_off = i << 2;
+    const uint32_t t_word = buffer[i];
+
+    tag[b_off ^ 0] = static_cast<uint8_t>(t_word >> 0);
+    tag[b_off ^ 1] = static_cast<uint8_t>(t_word >> 8);
+    tag[b_off ^ 2] = static_cast<uint8_t>(t_word >> 16);
+    tag[b_off ^ 3] = static_cast<uint8_t>(t_word >> 24);
+  }
+}
+
 }
