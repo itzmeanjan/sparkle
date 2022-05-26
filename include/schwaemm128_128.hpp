@@ -329,4 +329,130 @@ process_plain_text(
   sparkle::sparkle<4ul, 10ul>(state);
 }
 
+// Consumes non-empty ( N -many | N > 0 ) encrypted text into 256 -bit
+// permutation state, while producing equal many decrypted text bytes, using
+// algorithm 2.18 of Sparkle specification
+// https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
+static inline void
+process_cipher_text(
+  uint32_t* const __restrict state,    // 256 -bit permutation state
+  const uint8_t* const __restrict enc, // N (>0) -bytes encrypted text
+  uint8_t* const __restrict dec,       // N (>0) -bytes decrypted text
+  const size_t ct_len                  // len(enc) = len(dec) = N | N > 0
+)
+{
+  constexpr size_t RATE = 16;          // bytes
+  constexpr size_t RATE_W = RATE >> 2; // words
+
+  uint32_t buffer0[RATE_W + 1ul];
+  uint32_t buffer1[RATE_W];
+
+  size_t r_bytes = ct_len;
+  while (r_bytes > RATE) {
+    const size_t b_off = ct_len - r_bytes;
+
+    for (size_t i = 0; i < RATE_W; i++) {
+      const size_t i_off = i << 2;
+
+      buffer0[i] = (static_cast<uint32_t>(enc[b_off + (i_off ^ 3)]) << 24) |
+                   (static_cast<uint32_t>(enc[b_off + (i_off ^ 2)]) << 16) |
+                   (static_cast<uint32_t>(enc[b_off + (i_off ^ 1)]) << 8) |
+                   (static_cast<uint32_t>(enc[b_off + (i_off ^ 0)]) << 0);
+    }
+
+    std::memcpy(buffer1, state, RATE);
+    rhoprime2(buffer1, buffer0);
+
+    for (size_t i = 0; i < RATE_W; i++) {
+      const size_t i_off = i << 2;
+
+      dec[b_off + (i_off ^ 0)] = static_cast<uint8_t>(buffer1[i] >> 0);
+      dec[b_off + (i_off ^ 1)] = static_cast<uint8_t>(buffer1[i] >> 8);
+      dec[b_off + (i_off ^ 2)] = static_cast<uint8_t>(buffer1[i] >> 16);
+      dec[b_off + (i_off ^ 3)] = static_cast<uint8_t>(buffer1[i] >> 24);
+    }
+
+    rhoprime1(state, buffer0);
+
+    for (size_t i = 0; i < RATE_W; i++) {
+      state[i] ^= state[RATE_W ^ i];
+    }
+
+    sparkle::sparkle<4ul, 7ul>(state);
+
+    r_bytes -= RATE;
+  }
+
+  const size_t b_off = ct_len - r_bytes;
+  const size_t rb_full_words = r_bytes >> 2;
+  const size_t rb_rem_bytes = r_bytes & 3ul;
+  const size_t w_off = rb_full_words << 2;
+
+  std::memset(buffer0, 0, RATE);
+
+  for (size_t i = 0; i < rb_full_words; i++) {
+    const size_t i_off = i << 2;
+
+    buffer0[i] = (static_cast<uint32_t>(enc[b_off + (i_off ^ 3)]) << 24) |
+                 (static_cast<uint32_t>(enc[b_off + (i_off ^ 2)]) << 16) |
+                 (static_cast<uint32_t>(enc[b_off + (i_off ^ 1)]) << 8) |
+                 (static_cast<uint32_t>(enc[b_off + (i_off ^ 0)]) << 0);
+  }
+
+  uint32_t word = 0x80u << (rb_rem_bytes << 3);
+  for (size_t i = 0; i < rb_rem_bytes; i++) {
+    const size_t idx = b_off + w_off + i;
+
+    word |= static_cast<uint32_t>(enc[idx]) << (i << 3);
+  }
+
+  const uint32_t words[2] = { 0u, word };
+  buffer0[rb_full_words] = words[rb_full_words < RATE_W];
+
+  std::memcpy(buffer1, state, RATE);
+  rhoprime2(buffer1, buffer0);
+
+  for (size_t i = 0; i < rb_full_words; i++) {
+    const size_t i_off = i << 2;
+
+    dec[b_off + (i_off ^ 0)] = static_cast<uint8_t>(buffer1[i] >> 0);
+    dec[b_off + (i_off ^ 1)] = static_cast<uint8_t>(buffer1[i] >> 8);
+    dec[b_off + (i_off ^ 2)] = static_cast<uint8_t>(buffer1[i] >> 16);
+    dec[b_off + (i_off ^ 3)] = static_cast<uint8_t>(buffer1[i] >> 24);
+  }
+
+  for (size_t i = 0; i < rb_rem_bytes; i++) {
+    const size_t idx = b_off + w_off + i;
+
+    dec[idx] = static_cast<uint8_t>(buffer1[rb_full_words] >> (i << 3));
+  }
+
+  if (r_bytes < RATE) {
+    std::memset(buffer1 + rb_full_words, 0, RATE - w_off);
+
+    uint32_t word = 0x80u << (rb_rem_bytes << 3);
+
+    for (size_t i = 0; i < rb_rem_bytes; i++) {
+      const size_t idx = b_off + w_off + i;
+
+      word |= static_cast<uint32_t>(dec[idx]) << (i << 3);
+    }
+
+    buffer1[rb_full_words] = word;
+
+    rho1(state, buffer1);
+  } else {
+    rhoprime1(state, buffer0);
+  }
+
+  constexpr uint32_t consts[2] = { CONST_M1, CONST_M0 };
+  state[(RATE_W << 1) - 1ul] ^= consts[rb_full_words < RATE_W];
+
+  for (size_t i = 0; i < RATE_W; i++) {
+    state[i] ^= state[RATE_W ^ i];
+  }
+
+  sparkle::sparkle<4ul, 10ul>(state);
+}
+
 }
