@@ -54,5 +54,23 @@ BENCHMARK(schwaemm192_192_decrypt)->Args({ 2048, 32 });
 BENCHMARK(schwaemm192_192_encrypt)->Args({ 4096, 32 });
 BENCHMARK(schwaemm192_192_decrypt)->Args({ 4096, 32 });
 
+// registering Schwaemm128-128 AEAD encrypt/ decrypt routines for benchmark
+//
+// note, associated data size is set to be 32 -bytes for all cases
+BENCHMARK(schwaemm128_128_encrypt)->Args({ 64, 32 });
+BENCHMARK(schwaemm128_128_decrypt)->Args({ 64, 32 });
+BENCHMARK(schwaemm128_128_encrypt)->Args({ 128, 32 });
+BENCHMARK(schwaemm128_128_decrypt)->Args({ 128, 32 });
+BENCHMARK(schwaemm128_128_encrypt)->Args({ 256, 32 });
+BENCHMARK(schwaemm128_128_decrypt)->Args({ 256, 32 });
+BENCHMARK(schwaemm128_128_encrypt)->Args({ 512, 32 });
+BENCHMARK(schwaemm128_128_decrypt)->Args({ 512, 32 });
+BENCHMARK(schwaemm128_128_encrypt)->Args({ 1024, 32 });
+BENCHMARK(schwaemm128_128_decrypt)->Args({ 1024, 32 });
+BENCHMARK(schwaemm128_128_encrypt)->Args({ 2048, 32 });
+BENCHMARK(schwaemm128_128_decrypt)->Args({ 2048, 32 });
+BENCHMARK(schwaemm128_128_encrypt)->Args({ 4096, 32 });
+BENCHMARK(schwaemm128_128_decrypt)->Args({ 4096, 32 });
+
 // main function to drive execution of benchmark
 BENCHMARK_MAIN();
