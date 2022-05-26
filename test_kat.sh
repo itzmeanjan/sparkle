@@ -20,6 +20,7 @@ cp sparkle/Implementations/crypto_hash/esch256v2/LWC_HASH_KAT_256.txt ../
 cp sparkle/Implementations/crypto_hash/esch384v2/LWC_HASH_KAT_384.txt ../
 cp sparkle/Implementations/crypto_aead/schwaemm256128v2/LWC_AEAD_KAT_128_256.txt ../
 cp sparkle/Implementations/crypto_aead/schwaemm192192v2/LWC_AEAD_KAT_192_192.txt ../
+cp sparkle/Implementations/crypto_aead/schwaemm128128v2/LWC_AEAD_KAT_128_128.txt ../
 
 popd
 
@@ -33,6 +34,7 @@ mv LWC_HASH_KAT_256.txt wrapper/python/
 mv LWC_HASH_KAT_384.txt wrapper/python/
 mv LWC_AEAD_KAT_128_256.txt wrapper/python/
 mv LWC_AEAD_KAT_192_192.txt wrapper/python/
+mv LWC_AEAD_KAT_128_128.txt wrapper/python/
 
 # ---
 
