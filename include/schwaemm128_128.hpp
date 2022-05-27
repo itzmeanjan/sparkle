@@ -1,9 +1,16 @@
 #pragma once
 #include "sparkle.hpp"
+#include "utils.hpp"
 #include <cstring>
 
 // Schwaemm128-128 Authenticated Encryption with Associated Data ( AEAD ) Scheme
 namespace schwaemm128_128 {
+
+// These many bytes are consumed into permutation state, in every iteration
+constexpr size_t RATE = 16;
+
+// These many 32 -bit words are present in rate width of permutation
+constexpr size_t RATE_W = RATE >> 2;
 
 // To distinguish padded associated data block from non-padded one, this
 // constant is XORed into inner part of permutation state, when processing last
@@ -37,21 +44,31 @@ initialize(uint32_t* const __restrict state,     // 256 -bit permutation state
            const uint8_t* const __restrict nonce // 16 -bytes nonce
 )
 {
-  for (size_t i = 0; i < 4; i++) {
-    const size_t b_off = i << 2;
+  if constexpr (is_little_endian()) {
+    std::memcpy(state, nonce, RATE);
+    std::memcpy(state + RATE_W, key, RATE);
+  } else {
+#if defined __clang__
+#pragma unroll 4
+#elif defined __GNUG__
+#pragma GCC unroll 4
+#endif
+    for (size_t i = 0; i < 4; i++) {
+      const size_t b_off = i << 2;
 
-    const size_t s_idx0 = i;
-    const size_t s_idx1 = 4ul ^ i;
+      const size_t s_idx0 = i;
+      const size_t s_idx1 = RATE_W ^ i;
 
-    state[s_idx0] = (static_cast<uint32_t>(nonce[b_off ^ 3]) << 24) |
-                    (static_cast<uint32_t>(nonce[b_off ^ 2]) << 16) |
-                    (static_cast<uint32_t>(nonce[b_off ^ 1]) << 8) |
-                    (static_cast<uint32_t>(nonce[b_off ^ 0]) << 0);
+      state[s_idx0] = (static_cast<uint32_t>(nonce[b_off ^ 3]) << 24) |
+                      (static_cast<uint32_t>(nonce[b_off ^ 2]) << 16) |
+                      (static_cast<uint32_t>(nonce[b_off ^ 1]) << 8) |
+                      (static_cast<uint32_t>(nonce[b_off ^ 0]) << 0);
 
-    state[s_idx1] = (static_cast<uint32_t>(key[b_off ^ 3]) << 24) |
-                    (static_cast<uint32_t>(key[b_off ^ 2]) << 16) |
-                    (static_cast<uint32_t>(key[b_off ^ 1]) << 8) |
-                    (static_cast<uint32_t>(key[b_off ^ 0]) << 0);
+      state[s_idx1] = (static_cast<uint32_t>(key[b_off ^ 3]) << 24) |
+                      (static_cast<uint32_t>(key[b_off ^ 2]) << 16) |
+                      (static_cast<uint32_t>(key[b_off ^ 1]) << 8) |
+                      (static_cast<uint32_t>(key[b_off ^ 0]) << 0);
+    }
   }
 
   sparkle::sparkle<4ul, 10ul>(state);
@@ -89,7 +106,12 @@ rho1(uint32_t* const __restrict s,      // 128 -bit
 {
   feistel_swap(s);
 
-  for (size_t i = 0; i < 4; i++) {
+#if defined __clang__
+#pragma unroll 4
+#elif defined __GNUG__
+#pragma GCC unroll 4
+#endif
+  for (size_t i = 0; i < RATE_W; i++) {
     s[i] ^= d[i];
   }
 }
@@ -103,7 +125,12 @@ rho2(uint32_t* const __restrict s,      // 128 -bit
      const uint32_t* const __restrict d // 128 -bit
 )
 {
-  for (size_t i = 0; i < 4; i++) {
+#if defined __clang__
+#pragma unroll 4
+#elif defined __GNUG__
+#pragma GCC unroll 4
+#endif
+  for (size_t i = 0; i < RATE_W; i++) {
     s[i] ^= d[i];
   }
 }
@@ -118,12 +145,17 @@ rhoprime1(uint32_t* const __restrict s,      // 128 -bit
           const uint32_t* const __restrict d // 128 -bit
 )
 {
-  uint32_t s_[4];
-  std::memcpy(s_, s, 16);
+  uint32_t s_[RATE_W];
+  std::memcpy(s_, s, RATE);
 
   feistel_swap(s);
 
-  for (size_t i = 0; i < 4; i++) {
+#if defined __clang__
+#pragma unroll 4
+#elif defined __GNUG__
+#pragma GCC unroll 4
+#endif
+  for (size_t i = 0; i < RATE_W; i++) {
     s[i] ^= s_[i] ^ d[i];
   }
 }
@@ -138,7 +170,12 @@ rhoprime2(uint32_t* const __restrict s,      // 128 -bit
           const uint32_t* const __restrict d // 128 -bit
 )
 {
-  for (size_t i = 0; i < 4; i++) {
+#if defined __clang__
+#pragma unroll 4
+#elif defined __GNUG__
+#pragma GCC unroll 4
+#endif
+  for (size_t i = 0; i < RATE_W; i++) {
     s[i] ^= d[i];
   }
 }
@@ -153,26 +190,37 @@ process_associated_data(
   const size_t d_len                    // len(data) = N -bytes | N > 0
 )
 {
-  constexpr size_t RATE = 16;          // bytes
-  constexpr size_t RATE_W = RATE >> 2; // words
-
   uint32_t buffer[RATE_W + 1];
 
   size_t r_bytes = d_len;
   while (r_bytes > RATE) {
     const size_t b_off = d_len - r_bytes;
 
-    for (size_t i = 0; i < RATE_W; i++) {
-      const size_t i_off = i << 2;
+    if constexpr (is_little_endian()) {
+      std::memcpy(buffer, data + b_off, RATE);
+    } else {
+#if defined __clang__
+#pragma unroll 4
+#elif defined __GNUG__
+#pragma GCC unroll 4
+#endif
+      for (size_t i = 0; i < RATE_W; i++) {
+        const size_t i_off = i << 2;
 
-      buffer[i] = (static_cast<uint32_t>(data[b_off + (i_off ^ 3)]) << 24) |
-                  (static_cast<uint32_t>(data[b_off + (i_off ^ 2)]) << 16) |
-                  (static_cast<uint32_t>(data[b_off + (i_off ^ 1)]) << 8) |
-                  (static_cast<uint32_t>(data[b_off + (i_off ^ 0)]) << 0);
+        buffer[i] = (static_cast<uint32_t>(data[b_off + (i_off ^ 3)]) << 24) |
+                    (static_cast<uint32_t>(data[b_off + (i_off ^ 2)]) << 16) |
+                    (static_cast<uint32_t>(data[b_off + (i_off ^ 1)]) << 8) |
+                    (static_cast<uint32_t>(data[b_off + (i_off ^ 0)]) << 0);
+      }
     }
 
     rho1(state, buffer);
 
+#if defined __clang__
+#pragma unroll 4
+#elif defined __GNUG__
+#pragma GCC unroll 4
+#endif
     for (size_t i = 0; i < RATE_W; i++) {
       state[i] ^= state[RATE_W ^ i];
     }
@@ -188,13 +236,17 @@ process_associated_data(
 
   std::memset(buffer, 0, RATE);
 
-  for (size_t i = 0; i < rb_full_words; i++) {
-    const size_t off = i << 2;
+  if constexpr (is_little_endian()) {
+    std::memcpy(buffer, data + b_off, rb_full_words << 2);
+  } else {
+    for (size_t i = 0; i < rb_full_words; i++) {
+      const size_t off = i << 2;
 
-    buffer[i] = (static_cast<uint32_t>(data[b_off + (off ^ 3)]) << 24) |
-                (static_cast<uint32_t>(data[b_off + (off ^ 2)]) << 16) |
-                (static_cast<uint32_t>(data[b_off + (off ^ 1)]) << 8) |
-                (static_cast<uint32_t>(data[b_off + (off ^ 0)]) << 0);
+      buffer[i] = (static_cast<uint32_t>(data[b_off + (off ^ 3)]) << 24) |
+                  (static_cast<uint32_t>(data[b_off + (off ^ 2)]) << 16) |
+                  (static_cast<uint32_t>(data[b_off + (off ^ 1)]) << 8) |
+                  (static_cast<uint32_t>(data[b_off + (off ^ 0)]) << 0);
+    }
   }
 
   uint32_t word = 0x80u << (rb_rem_bytes << 3);
@@ -210,8 +262,13 @@ process_associated_data(
   rho1(state, buffer);
 
   constexpr uint32_t consts[2] = { CONST_A1, CONST_A0 };
-  state[7] ^= consts[rb_full_words < RATE_W];
+  state[(RATE_W << 1) - 1] ^= consts[rb_full_words < RATE_W];
 
+#if defined __clang__
+#pragma unroll 4
+#elif defined __GNUG__
+#pragma GCC unroll 4
+#endif
   for (size_t i = 0; i < RATE_W; i++) {
     state[i] ^= state[RATE_W ^ i];
   }
@@ -231,9 +288,6 @@ process_plain_text(
   const size_t ct_len                  // len(txt) = len(enc) = N | N > 0
 )
 {
-  constexpr size_t RATE = 16;          // bytes
-  constexpr size_t RATE_W = RATE >> 2; // words
-
   uint32_t buffer0[RATE_W + 1];
   uint32_t buffer1[RATE_W];
 
@@ -241,29 +295,52 @@ process_plain_text(
   while (r_bytes > RATE) {
     const size_t b_off = ct_len - r_bytes;
 
-    for (size_t i = 0; i < RATE_W; i++) {
-      const size_t i_off = i << 2;
+    if constexpr (is_little_endian()) {
+      std::memcpy(buffer0, txt + b_off, RATE);
+    } else {
+#if defined __clang__
+#pragma unroll 4
+#elif defined __GNUG__
+#pragma GCC unroll 4
+#endif
+      for (size_t i = 0; i < RATE_W; i++) {
+        const size_t i_off = i << 2;
 
-      buffer0[i] = (static_cast<uint32_t>(txt[b_off + (i_off ^ 3)]) << 24) |
-                   (static_cast<uint32_t>(txt[b_off + (i_off ^ 2)]) << 16) |
-                   (static_cast<uint32_t>(txt[b_off + (i_off ^ 1)]) << 8) |
-                   (static_cast<uint32_t>(txt[b_off + (i_off ^ 0)]) << 0);
+        buffer0[i] = (static_cast<uint32_t>(txt[b_off + (i_off ^ 3)]) << 24) |
+                     (static_cast<uint32_t>(txt[b_off + (i_off ^ 2)]) << 16) |
+                     (static_cast<uint32_t>(txt[b_off + (i_off ^ 1)]) << 8) |
+                     (static_cast<uint32_t>(txt[b_off + (i_off ^ 0)]) << 0);
+      }
     }
 
     std::memcpy(buffer1, state, RATE);
     rho2(buffer1, buffer0);
 
-    for (size_t i = 0; i < RATE_W; i++) {
-      const size_t i_off = i << 2;
+    if constexpr (is_little_endian()) {
+      std::memcpy(enc + b_off, buffer1, RATE);
+    } else {
+#if defined __clang__
+#pragma unroll 4
+#elif defined __GNUG__
+#pragma GCC unroll 4
+#endif
+      for (size_t i = 0; i < RATE_W; i++) {
+        const size_t i_off = i << 2;
 
-      enc[b_off + (i_off ^ 0)] = static_cast<uint8_t>(buffer1[i] >> 0);
-      enc[b_off + (i_off ^ 1)] = static_cast<uint8_t>(buffer1[i] >> 8);
-      enc[b_off + (i_off ^ 2)] = static_cast<uint8_t>(buffer1[i] >> 16);
-      enc[b_off + (i_off ^ 3)] = static_cast<uint8_t>(buffer1[i] >> 24);
+        enc[b_off + (i_off ^ 0)] = static_cast<uint8_t>(buffer1[i] >> 0);
+        enc[b_off + (i_off ^ 1)] = static_cast<uint8_t>(buffer1[i] >> 8);
+        enc[b_off + (i_off ^ 2)] = static_cast<uint8_t>(buffer1[i] >> 16);
+        enc[b_off + (i_off ^ 3)] = static_cast<uint8_t>(buffer1[i] >> 24);
+      }
     }
 
     rho1(state, buffer0);
 
+#if defined __clang__
+#pragma unroll 4
+#elif defined __GNUG__
+#pragma GCC unroll 4
+#endif
     for (size_t i = 0; i < RATE_W; i++) {
       state[i] ^= state[RATE_W ^ i];
     }
@@ -280,13 +357,17 @@ process_plain_text(
 
   std::memset(buffer0, 0, RATE);
 
-  for (size_t i = 0; i < rb_full_words; i++) {
-    const size_t i_off = i << 2;
+  if constexpr (is_little_endian()) {
+    std::memcpy(buffer0, txt + b_off, rb_full_words << 2);
+  } else {
+    for (size_t i = 0; i < rb_full_words; i++) {
+      const size_t i_off = i << 2;
 
-    buffer0[i] = (static_cast<uint32_t>(txt[b_off + (i_off ^ 3)]) << 24) |
-                 (static_cast<uint32_t>(txt[b_off + (i_off ^ 2)]) << 16) |
-                 (static_cast<uint32_t>(txt[b_off + (i_off ^ 1)]) << 8) |
-                 (static_cast<uint32_t>(txt[b_off + (i_off ^ 0)]) << 0);
+      buffer0[i] = (static_cast<uint32_t>(txt[b_off + (i_off ^ 3)]) << 24) |
+                   (static_cast<uint32_t>(txt[b_off + (i_off ^ 2)]) << 16) |
+                   (static_cast<uint32_t>(txt[b_off + (i_off ^ 1)]) << 8) |
+                   (static_cast<uint32_t>(txt[b_off + (i_off ^ 0)]) << 0);
+    }
   }
 
   uint32_t word = 0x80u << (rb_rem_bytes << 3);
@@ -302,13 +383,17 @@ process_plain_text(
   std::memcpy(buffer1, state, RATE);
   rho2(buffer1, buffer0);
 
-  for (size_t i = 0; i < rb_full_words; i++) {
-    const size_t i_off = i << 2;
+  if constexpr (is_little_endian()) {
+    std::memcpy(enc + b_off, buffer1, rb_full_words << 2);
+  } else {
+    for (size_t i = 0; i < rb_full_words; i++) {
+      const size_t i_off = i << 2;
 
-    enc[b_off + (i_off ^ 0)] = static_cast<uint8_t>(buffer1[i] >> 0);
-    enc[b_off + (i_off ^ 1)] = static_cast<uint8_t>(buffer1[i] >> 8);
-    enc[b_off + (i_off ^ 2)] = static_cast<uint8_t>(buffer1[i] >> 16);
-    enc[b_off + (i_off ^ 3)] = static_cast<uint8_t>(buffer1[i] >> 24);
+      enc[b_off + (i_off ^ 0)] = static_cast<uint8_t>(buffer1[i] >> 0);
+      enc[b_off + (i_off ^ 1)] = static_cast<uint8_t>(buffer1[i] >> 8);
+      enc[b_off + (i_off ^ 2)] = static_cast<uint8_t>(buffer1[i] >> 16);
+      enc[b_off + (i_off ^ 3)] = static_cast<uint8_t>(buffer1[i] >> 24);
+    }
   }
 
   for (size_t i = 0; i < rb_rem_bytes; i++) {
@@ -320,8 +405,13 @@ process_plain_text(
   rho1(state, buffer0);
 
   constexpr uint32_t consts[2] = { CONST_M1, CONST_M0 };
-  state[7] ^= consts[rb_full_words < RATE_W];
+  state[(RATE_W << 1) - 1] ^= consts[rb_full_words < RATE_W];
 
+#if defined __clang__
+#pragma unroll 4
+#elif defined __GNUG__
+#pragma GCC unroll 4
+#endif
   for (size_t i = 0; i < RATE_W; i++) {
     state[i] ^= state[RATE_W ^ i];
   }
@@ -341,9 +431,6 @@ process_cipher_text(
   const size_t ct_len                  // len(enc) = len(dec) = N | N > 0
 )
 {
-  constexpr size_t RATE = 16;          // bytes
-  constexpr size_t RATE_W = RATE >> 2; // words
-
   uint32_t buffer0[RATE_W + 1ul];
   uint32_t buffer1[RATE_W];
 
@@ -351,29 +438,52 @@ process_cipher_text(
   while (r_bytes > RATE) {
     const size_t b_off = ct_len - r_bytes;
 
-    for (size_t i = 0; i < RATE_W; i++) {
-      const size_t i_off = i << 2;
+    if constexpr (is_little_endian()) {
+      std::memcpy(buffer0, enc + b_off, RATE);
+    } else {
+#if defined __clang__
+#pragma unroll 4
+#elif defined __GNUG__
+#pragma GCC unroll 4
+#endif
+      for (size_t i = 0; i < RATE_W; i++) {
+        const size_t i_off = i << 2;
 
-      buffer0[i] = (static_cast<uint32_t>(enc[b_off + (i_off ^ 3)]) << 24) |
-                   (static_cast<uint32_t>(enc[b_off + (i_off ^ 2)]) << 16) |
-                   (static_cast<uint32_t>(enc[b_off + (i_off ^ 1)]) << 8) |
-                   (static_cast<uint32_t>(enc[b_off + (i_off ^ 0)]) << 0);
+        buffer0[i] = (static_cast<uint32_t>(enc[b_off + (i_off ^ 3)]) << 24) |
+                     (static_cast<uint32_t>(enc[b_off + (i_off ^ 2)]) << 16) |
+                     (static_cast<uint32_t>(enc[b_off + (i_off ^ 1)]) << 8) |
+                     (static_cast<uint32_t>(enc[b_off + (i_off ^ 0)]) << 0);
+      }
     }
 
     std::memcpy(buffer1, state, RATE);
     rhoprime2(buffer1, buffer0);
 
-    for (size_t i = 0; i < RATE_W; i++) {
-      const size_t i_off = i << 2;
+    if constexpr (is_little_endian()) {
+      std::memcpy(dec + b_off, buffer1, RATE);
+    } else {
+#if defined __clang__
+#pragma unroll 4
+#elif defined __GNUG__
+#pragma GCC unroll 4
+#endif
+      for (size_t i = 0; i < RATE_W; i++) {
+        const size_t i_off = i << 2;
 
-      dec[b_off + (i_off ^ 0)] = static_cast<uint8_t>(buffer1[i] >> 0);
-      dec[b_off + (i_off ^ 1)] = static_cast<uint8_t>(buffer1[i] >> 8);
-      dec[b_off + (i_off ^ 2)] = static_cast<uint8_t>(buffer1[i] >> 16);
-      dec[b_off + (i_off ^ 3)] = static_cast<uint8_t>(buffer1[i] >> 24);
+        dec[b_off + (i_off ^ 0)] = static_cast<uint8_t>(buffer1[i] >> 0);
+        dec[b_off + (i_off ^ 1)] = static_cast<uint8_t>(buffer1[i] >> 8);
+        dec[b_off + (i_off ^ 2)] = static_cast<uint8_t>(buffer1[i] >> 16);
+        dec[b_off + (i_off ^ 3)] = static_cast<uint8_t>(buffer1[i] >> 24);
+      }
     }
 
     rhoprime1(state, buffer0);
 
+#if defined __clang__
+#pragma unroll 4
+#elif defined __GNUG__
+#pragma GCC unroll 4
+#endif
     for (size_t i = 0; i < RATE_W; i++) {
       state[i] ^= state[RATE_W ^ i];
     }
@@ -390,13 +500,17 @@ process_cipher_text(
 
   std::memset(buffer0, 0, RATE);
 
-  for (size_t i = 0; i < rb_full_words; i++) {
-    const size_t i_off = i << 2;
+  if constexpr (is_little_endian()) {
+    std::memcpy(buffer0, enc + b_off, rb_full_words << 2);
+  } else {
+    for (size_t i = 0; i < rb_full_words; i++) {
+      const size_t i_off = i << 2;
 
-    buffer0[i] = (static_cast<uint32_t>(enc[b_off + (i_off ^ 3)]) << 24) |
-                 (static_cast<uint32_t>(enc[b_off + (i_off ^ 2)]) << 16) |
-                 (static_cast<uint32_t>(enc[b_off + (i_off ^ 1)]) << 8) |
-                 (static_cast<uint32_t>(enc[b_off + (i_off ^ 0)]) << 0);
+      buffer0[i] = (static_cast<uint32_t>(enc[b_off + (i_off ^ 3)]) << 24) |
+                   (static_cast<uint32_t>(enc[b_off + (i_off ^ 2)]) << 16) |
+                   (static_cast<uint32_t>(enc[b_off + (i_off ^ 1)]) << 8) |
+                   (static_cast<uint32_t>(enc[b_off + (i_off ^ 0)]) << 0);
+    }
   }
 
   uint32_t word = 0x80u << (rb_rem_bytes << 3);
@@ -412,13 +526,17 @@ process_cipher_text(
   std::memcpy(buffer1, state, RATE);
   rhoprime2(buffer1, buffer0);
 
-  for (size_t i = 0; i < rb_full_words; i++) {
-    const size_t i_off = i << 2;
+  if constexpr (is_little_endian()) {
+    std::memcpy(dec + b_off, buffer1, rb_full_words << 2);
+  } else {
+    for (size_t i = 0; i < rb_full_words; i++) {
+      const size_t i_off = i << 2;
 
-    dec[b_off + (i_off ^ 0)] = static_cast<uint8_t>(buffer1[i] >> 0);
-    dec[b_off + (i_off ^ 1)] = static_cast<uint8_t>(buffer1[i] >> 8);
-    dec[b_off + (i_off ^ 2)] = static_cast<uint8_t>(buffer1[i] >> 16);
-    dec[b_off + (i_off ^ 3)] = static_cast<uint8_t>(buffer1[i] >> 24);
+      dec[b_off + (i_off ^ 0)] = static_cast<uint8_t>(buffer1[i] >> 0);
+      dec[b_off + (i_off ^ 1)] = static_cast<uint8_t>(buffer1[i] >> 8);
+      dec[b_off + (i_off ^ 2)] = static_cast<uint8_t>(buffer1[i] >> 16);
+      dec[b_off + (i_off ^ 3)] = static_cast<uint8_t>(buffer1[i] >> 24);
+    }
   }
 
   for (size_t i = 0; i < rb_rem_bytes; i++) {
@@ -448,6 +566,11 @@ process_cipher_text(
   constexpr uint32_t consts[2] = { CONST_M1, CONST_M0 };
   state[(RATE_W << 1) - 1ul] ^= consts[rb_full_words < RATE_W];
 
+#if defined __clang__
+#pragma unroll 4
+#elif defined __GNUG__
+#pragma GCC unroll 4
+#endif
   for (size_t i = 0; i < RATE_W; i++) {
     state[i] ^= state[RATE_W ^ i];
   }
@@ -467,29 +590,52 @@ finalize(
   uint8_t* const __restrict tag           // 16 -bytes authentication tag
 )
 {
-  uint32_t buffer[4];
+  uint32_t buffer[RATE_W];
 
-  for (size_t i = 0; i < 4; i++) {
-    const size_t b_off = i << 2;
+  if constexpr (is_little_endian()) {
+    std::memcpy(buffer, key, RATE);
+  } else {
+#if defined __clang__
+#pragma unroll 4
+#elif defined __GNUG__
+#pragma GCC unroll 4
+#endif
+    for (size_t i = 0; i < RATE_W; i++) {
+      const size_t b_off = i << 2;
 
-    buffer[i] = (static_cast<uint32_t>(key[b_off ^ 3]) << 24) |
-                (static_cast<uint32_t>(key[b_off ^ 2]) << 16) |
-                (static_cast<uint32_t>(key[b_off ^ 1]) << 8) |
-                (static_cast<uint32_t>(key[b_off ^ 0]) << 0);
+      buffer[i] = (static_cast<uint32_t>(key[b_off ^ 3]) << 24) |
+                  (static_cast<uint32_t>(key[b_off ^ 2]) << 16) |
+                  (static_cast<uint32_t>(key[b_off ^ 1]) << 8) |
+                  (static_cast<uint32_t>(key[b_off ^ 0]) << 0);
+    }
   }
 
-  for (size_t i = 0; i < 4; i++) {
-    buffer[i] ^= state[4ul ^ i];
+#if defined __clang__
+#pragma unroll 4
+#elif defined __GNUG__
+#pragma GCC unroll 4
+#endif
+  for (size_t i = 0; i < RATE_W; i++) {
+    buffer[i] ^= state[RATE_W ^ i];
   }
 
-  for (size_t i = 0; i < 4; i++) {
-    const size_t b_off = i << 2;
-    const uint32_t t_word = buffer[i];
+  if constexpr (is_little_endian()) {
+    std::memcpy(tag, buffer, RATE);
+  } else {
+#if defined __clang__
+#pragma unroll 4
+#elif defined __GNUG__
+#pragma GCC unroll 4
+#endif
+    for (size_t i = 0; i < RATE_W; i++) {
+      const size_t b_off = i << 2;
+      const uint32_t t_word = buffer[i];
 
-    tag[b_off ^ 0] = static_cast<uint8_t>(t_word >> 0);
-    tag[b_off ^ 1] = static_cast<uint8_t>(t_word >> 8);
-    tag[b_off ^ 2] = static_cast<uint8_t>(t_word >> 16);
-    tag[b_off ^ 3] = static_cast<uint8_t>(t_word >> 24);
+      tag[b_off ^ 0] = static_cast<uint8_t>(t_word >> 0);
+      tag[b_off ^ 1] = static_cast<uint8_t>(t_word >> 8);
+      tag[b_off ^ 2] = static_cast<uint8_t>(t_word >> 16);
+      tag[b_off ^ 3] = static_cast<uint8_t>(t_word >> 24);
+    }
   }
 }
 
@@ -559,7 +705,7 @@ decrypt(const uint8_t* const __restrict key,   // 16 -bytes secret key
 )
 {
   uint32_t state[8];
-  uint8_t tag_[16];
+  uint8_t tag_[RATE];
 
   initialize(state, key, nonce);
 
@@ -573,7 +719,7 @@ decrypt(const uint8_t* const __restrict key,   // 16 -bytes secret key
   finalize(state, key, tag_);
 
   bool flag = false;
-  for (size_t i = 0; i < 16; i++) {
+  for (size_t i = 0; i < RATE; i++) {
     flag |= (tag[i] ^ tag_[i]);
   }
   return !flag;
