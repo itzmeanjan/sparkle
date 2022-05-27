@@ -1,9 +1,16 @@
 #pragma once
+#include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <iomanip>
 #include <random>
 #include <sstream>
+
+consteval static inline bool
+is_little_endian()
+{
+  return std::endian::native == std::endian::little;
+}
 
 // Given a bytearray of length N, this function converts it to human readable
 // hex string of length N << 1
