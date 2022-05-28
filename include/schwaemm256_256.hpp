@@ -12,6 +12,12 @@ constexpr size_t RATE = 32;
 // These many 32 -bit words are present in rate width of permutation
 constexpr size_t RATE_W = RATE >> 2;
 
+// # -of steps in slim variant of Schwaemm256-256 AEAD
+constexpr size_t SLIM = 8ul;
+
+// # -of steps in big variant of Schwaemm256-256 AEAD
+constexpr size_t BIG = 12ul;
+
 // To distinguish padded associated data block from non-padded one, this
 // constant is XORed into inner part of permutation state, when processing last
 // associated data block
@@ -62,7 +68,7 @@ initialize(uint32_t* const __restrict state,     // 512 -bit permutation state
                     (static_cast<uint32_t>(key[b_off ^ 0]) << 0);
   }
 
-  sparkle::sparkle<RATE_W, 12ul>(state);
+  sparkle::sparkle<RATE_W, BIG>(state);
 }
 
 // FeistelSwap - invoked from combined feedback function `𝜌`,  which is used for
@@ -153,6 +159,79 @@ rhoprime2(uint32_t* const __restrict s,      // 256 -bit
   for (size_t i = 0; i < RATE_W; i++) {
     s[i] ^= d[i];
   }
+}
+
+// Consumes non-empty associated data into 512 -bit permutation state using
+// algorithm 2.19 of Sparkle specification
+// https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
+static inline void
+process_associated_data(
+  uint32_t* const __restrict state,     // 512 -bit permutation state
+  const uint8_t* const __restrict data, // N (>0) -bytes associated data
+  const size_t d_len                    // len(data) = N -bytes | N > 0
+)
+{
+  uint32_t buffer[RATE_W + 1];
+
+  size_t r_bytes = d_len;
+  while (r_bytes > RATE) {
+    const size_t b_off = d_len - r_bytes;
+
+    for (size_t i = 0; i < RATE_W; i++) {
+      const size_t i_off = i << 2;
+
+      buffer[i] = (static_cast<uint32_t>(data[b_off + (i_off ^ 3)]) << 24) |
+                  (static_cast<uint32_t>(data[b_off + (i_off ^ 2)]) << 16) |
+                  (static_cast<uint32_t>(data[b_off + (i_off ^ 1)]) << 8) |
+                  (static_cast<uint32_t>(data[b_off + (i_off ^ 0)]) << 0);
+    }
+
+    rho1(state, buffer);
+
+    for (size_t i = 0; i < RATE_W; i++) {
+      state[i] ^= state[RATE_W ^ i];
+    }
+
+    sparkle::sparkle<RATE_W, SLIM>(state);
+
+    r_bytes -= RATE;
+  }
+
+  const size_t b_off = d_len - r_bytes;
+  const size_t rb_full_words = r_bytes >> 2;
+  const size_t rb_rem_bytes = r_bytes & 3ul;
+
+  std::memset(buffer, 0, RATE);
+
+  for (size_t i = 0; i < rb_full_words; i++) {
+    const size_t off = i << 2;
+
+    buffer[i] = (static_cast<uint32_t>(data[b_off + (off ^ 3)]) << 24) |
+                (static_cast<uint32_t>(data[b_off + (off ^ 2)]) << 16) |
+                (static_cast<uint32_t>(data[b_off + (off ^ 1)]) << 8) |
+                (static_cast<uint32_t>(data[b_off + (off ^ 0)]) << 0);
+  }
+
+  uint32_t word = 0x80u << (rb_rem_bytes << 3);
+  const size_t off = rb_full_words << 2;
+
+  for (size_t i = 0; i < rb_rem_bytes; i++) {
+    word |= static_cast<uint32_t>(data[b_off + off + i]) << (i << 3);
+  }
+
+  const uint32_t words[2] = { 0u, word };
+  buffer[rb_full_words] = words[rb_full_words < RATE_W];
+
+  rho1(state, buffer);
+
+  constexpr uint32_t consts[2] = { CONST_A1, CONST_A0 };
+  state[(RATE_W << 1) - 1] ^= consts[rb_full_words < RATE_W];
+
+  for (size_t i = 0; i < RATE_W; i++) {
+    state[i] ^= state[RATE_W ^ i];
+  }
+
+  sparkle::sparkle<RATE_W, BIG>(state);
 }
 
 }
