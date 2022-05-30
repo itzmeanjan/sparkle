@@ -1,5 +1,6 @@
 #pragma once
 #include "hash.hpp"
+#include "utils.hpp"
 #include <cstring>
 
 // Esch256 hash function, based on Sparkle permutation
@@ -34,18 +35,22 @@ hash(const uint8_t* const __restrict in, // input message
 
     std::memset(buffer + 4, 0, 8);
 
+    if constexpr (is_little_endian()) {
+      std::memcpy(buffer, in + b_off, hash::RATE);
+    } else {
 #if defined __clang__
 #pragma unroll 4
 #elif defined __GNUG__
 #pragma GCC unroll 4
 #endif
-    for (size_t j = 0; j < 4; j++) {
-      const size_t i_off = j << 2;
+      for (size_t j = 0; j < 4; j++) {
+        const size_t i_off = j << 2;
 
-      buffer[j] = (static_cast<uint32_t>(in[b_off + (i_off ^ 3)]) << 24) |
-                  (static_cast<uint32_t>(in[b_off + (i_off ^ 2)]) << 16) |
-                  (static_cast<uint32_t>(in[b_off + (i_off ^ 1)]) << 8) |
-                  (static_cast<uint32_t>(in[b_off + (i_off ^ 0)]) << 0);
+        buffer[j] = (static_cast<uint32_t>(in[b_off + (i_off ^ 3)]) << 24) |
+                    (static_cast<uint32_t>(in[b_off + (i_off ^ 2)]) << 16) |
+                    (static_cast<uint32_t>(in[b_off + (i_off ^ 1)]) << 8) |
+                    (static_cast<uint32_t>(in[b_off + (i_off ^ 0)]) << 0);
+      }
     }
 
     hash::feistel<384ul>(state, buffer);
@@ -60,13 +65,17 @@ hash(const uint8_t* const __restrict in, // input message
 
   std::memset(buffer, 0, 24);
 
-  for (size_t i = 0; i < rb_full_words; i++) {
-    const size_t off = i << 2;
+  if constexpr (is_little_endian()) {
+    std::memcpy(buffer, in + b_off, rb_full_words << 2);
+  } else {
+    for (size_t i = 0; i < rb_full_words; i++) {
+      const size_t off = i << 2;
 
-    buffer[i] = (static_cast<uint32_t>(in[b_off + (off ^ 3)]) << 24) |
-                (static_cast<uint32_t>(in[b_off + (off ^ 2)]) << 16) |
-                (static_cast<uint32_t>(in[b_off + (off ^ 1)]) << 8) |
-                (static_cast<uint32_t>(in[b_off + (off ^ 0)]) << 0);
+      buffer[i] = (static_cast<uint32_t>(in[b_off + (off ^ 3)]) << 24) |
+                  (static_cast<uint32_t>(in[b_off + (off ^ 2)]) << 16) |
+                  (static_cast<uint32_t>(in[b_off + (off ^ 1)]) << 8) |
+                  (static_cast<uint32_t>(in[b_off + (off ^ 0)]) << 0);
+    }
   }
 
   uint32_t word = 0x80u << (rb_rem_bytes << 3);
@@ -85,36 +94,44 @@ hash(const uint8_t* const __restrict in, // input message
   hash::feistel<384ul>(state, buffer);
   sparkle::sparkle<6ul, 11ul>(state);
 
+  if constexpr (is_little_endian()) {
+    std::memcpy(out, state, hash::RATE);
+  } else {
 #if defined __clang__
 #pragma unroll 4
 #elif defined __GNUG__
 #pragma GCC unroll 4
 #endif
-  for (size_t i = 0; i < 4; i++) {
-    const uint32_t word = state[i];
-    const size_t b_off = i << 2;
+    for (size_t i = 0; i < 4; i++) {
+      const uint32_t word = state[i];
+      const size_t b_off = i << 2;
 
-    out[b_off ^ 0] = static_cast<uint8_t>(word >> 0);
-    out[b_off ^ 1] = static_cast<uint8_t>(word >> 8);
-    out[b_off ^ 2] = static_cast<uint8_t>(word >> 16);
-    out[b_off ^ 3] = static_cast<uint8_t>(word >> 24);
+      out[b_off ^ 0] = static_cast<uint8_t>(word >> 0);
+      out[b_off ^ 1] = static_cast<uint8_t>(word >> 8);
+      out[b_off ^ 2] = static_cast<uint8_t>(word >> 16);
+      out[b_off ^ 3] = static_cast<uint8_t>(word >> 24);
+    }
   }
 
   sparkle::sparkle<6ul, 7ul>(state);
 
+  if constexpr (is_little_endian()) {
+    std::memcpy(out + hash::RATE, state, hash::RATE);
+  } else {
 #if defined __clang__
 #pragma unroll 4
 #elif defined __GNUG__
 #pragma GCC unroll 4
 #endif
-  for (size_t i = 0; i < 4; i++) {
-    const uint32_t word = state[i];
-    const size_t b_off = i << 2;
+    for (size_t i = 0; i < 4; i++) {
+      const uint32_t word = state[i];
+      const size_t b_off = i << 2;
 
-    out[16ul + (b_off ^ 0)] = static_cast<uint8_t>(word >> 0);
-    out[16ul + (b_off ^ 1)] = static_cast<uint8_t>(word >> 8);
-    out[16ul + (b_off ^ 2)] = static_cast<uint8_t>(word >> 16);
-    out[16ul + (b_off ^ 3)] = static_cast<uint8_t>(word >> 24);
+      out[16ul + (b_off ^ 0)] = static_cast<uint8_t>(word >> 0);
+      out[16ul + (b_off ^ 1)] = static_cast<uint8_t>(word >> 8);
+      out[16ul + (b_off ^ 2)] = static_cast<uint8_t>(word >> 16);
+      out[16ul + (b_off ^ 3)] = static_cast<uint8_t>(word >> 24);
+    }
   }
 }
 
