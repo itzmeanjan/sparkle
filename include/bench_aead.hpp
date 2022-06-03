@@ -16,21 +16,21 @@ static void schwaemm256_128_encrypt(benchmark::State& state) {
   uint8_t* text = static_cast<uint8_t*>(malloc(ct_len));
   uint8_t* enc = static_cast<uint8_t*>(malloc(ct_len));
   uint8_t* data = static_cast<uint8_t*>(malloc(dt_len));
-  uint8_t* key = static_cast<uint8_t*>(malloc(16));
-  uint8_t* nonce = static_cast<uint8_t*>(malloc(32));
-  uint8_t* tag = static_cast<uint8_t*>(malloc(16));
+  uint8_t* key = static_cast<uint8_t*>(malloc(schwaemm256_128::C));
+  uint8_t* nonce = static_cast<uint8_t*>(malloc(schwaemm256_128::R));
+  uint8_t* tag = static_cast<uint8_t*>(malloc(schwaemm256_128::C));
 
   // random plain text bytes
   random_data(text, ct_len);
   // random associated data bytes
   random_data(data, dt_len);
   // random secret key ( = 128 -bit )
-  random_data(key, 16);
+  random_data(key, schwaemm256_128::C);
   // random public message nonce ( = 256 -bit )
-  random_data(nonce, 32);
+  random_data(nonce, schwaemm256_128::R);
 
   memset(enc, 0, ct_len);
-  memset(tag, 0, 16);
+  memset(tag, 0, schwaemm256_128::C);
 
   for (auto _ : state) {
     schwaemm256_128::encrypt(key, nonce, data, dt_len, text, enc, ct_len, tag);
@@ -63,22 +63,22 @@ static void schwaemm256_128_decrypt(benchmark::State& state) {
   uint8_t* enc = static_cast<uint8_t*>(malloc(ct_len));
   uint8_t* dec = static_cast<uint8_t*>(malloc(ct_len));
   uint8_t* data = static_cast<uint8_t*>(malloc(dt_len));
-  uint8_t* key = static_cast<uint8_t*>(malloc(16));
-  uint8_t* nonce = static_cast<uint8_t*>(malloc(32));
-  uint8_t* tag = static_cast<uint8_t*>(malloc(16));
+  uint8_t* key = static_cast<uint8_t*>(malloc(schwaemm256_128::C));
+  uint8_t* nonce = static_cast<uint8_t*>(malloc(schwaemm256_128::R));
+  uint8_t* tag = static_cast<uint8_t*>(malloc(schwaemm256_128::C));
 
   // random plain text bytes
   random_data(text, ct_len);
   // random associated data bytes
   random_data(data, dt_len);
   // random secret key ( = 128 -bit )
-  random_data(key, 16);
+  random_data(key, schwaemm256_128::C);
   // random public message nonce ( = 256 -bit )
-  random_data(nonce, 32);
+  random_data(nonce, schwaemm256_128::R);
 
   memset(enc, 0, ct_len);
   memset(dec, 0, ct_len);
-  memset(tag, 0, 16);
+  memset(tag, 0, schwaemm256_128::C);
 
   schwaemm256_128::encrypt(key, nonce, data, dt_len, text, enc, ct_len, tag);
 
@@ -109,7 +109,8 @@ static void schwaemm256_128_decrypt(benchmark::State& state) {
 static void schwaemm192_192_encrypt(benchmark::State& state) {
   const size_t ct_len = state.range(0);
   const size_t dt_len = state.range(1);
-  constexpr size_t KNT_LEN = 24;
+
+  constexpr size_t KNT_LEN = schwaemm192_192::R;
 
   // acquire memory resources
   uint8_t* text = static_cast<uint8_t*>(malloc(ct_len));
@@ -156,7 +157,8 @@ static void schwaemm192_192_encrypt(benchmark::State& state) {
 static void schwaemm192_192_decrypt(benchmark::State& state) {
   const size_t ct_len = state.range(0);
   const size_t dt_len = state.range(1);
-  constexpr size_t KNT_LEN = 24;
+
+  constexpr size_t KNT_LEN = schwaemm192_192::R;
 
   // acquire memory resources
   uint8_t* text = static_cast<uint8_t*>(malloc(ct_len));
@@ -209,7 +211,8 @@ static void schwaemm192_192_decrypt(benchmark::State& state) {
 static void schwaemm128_128_encrypt(benchmark::State& state) {
   const size_t ct_len = state.range(0);
   const size_t dt_len = state.range(1);
-  constexpr size_t KNT_LEN = 16;
+
+  constexpr size_t KNT_LEN = schwaemm128_128::R;
 
   // acquire memory resources
   uint8_t* text = static_cast<uint8_t*>(malloc(ct_len));
@@ -256,7 +259,8 @@ static void schwaemm128_128_encrypt(benchmark::State& state) {
 static void schwaemm128_128_decrypt(benchmark::State& state) {
   const size_t ct_len = state.range(0);
   const size_t dt_len = state.range(1);
-  constexpr size_t KNT_LEN = 16;
+
+  constexpr size_t KNT_LEN = schwaemm128_128::R;
 
   // acquire memory resources
   uint8_t* text = static_cast<uint8_t*>(malloc(ct_len));
@@ -310,7 +314,7 @@ static void schwaemm256_256_encrypt(benchmark::State& state) {
   const size_t ct_len = state.range(0);
   const size_t dt_len = state.range(1);
 
-  constexpr size_t KNT_LEN = schwaemm256_256::RATE;
+  constexpr size_t KNT_LEN = schwaemm256_256::R;
 
   // acquire memory resources
   uint8_t* text = static_cast<uint8_t*>(malloc(ct_len));
@@ -358,7 +362,7 @@ static void schwaemm256_256_decrypt(benchmark::State& state) {
   const size_t ct_len = state.range(0);
   const size_t dt_len = state.range(1);
 
-  constexpr size_t KNT_LEN = schwaemm256_256::RATE;
+  constexpr size_t KNT_LEN = schwaemm256_256::R;
 
   // acquire memory resources
   uint8_t* text = static_cast<uint8_t*>(malloc(ct_len));
