@@ -31,10 +31,9 @@ constexpr uint32_t CONST_M1 = 2u << 24;
 //
 // See section 2.2.2 of Sparkle specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
-template<const size_t state_w>
-static inline void
-feistel(uint32_t* const __restrict state, const uint32_t* const __restrict msg)
-{
+template <const size_t state_w>
+static inline void feistel(uint32_t* const __restrict state,
+                           const uint32_t* const __restrict msg) {
   // This branch is taken when computing Esch256 hash
   //
   // Note, in Esch256 sparkle permutation variant Sparkle384 is used
@@ -77,4 +76,4 @@ feistel(uint32_t* const __restrict state, const uint32_t* const __restrict msg)
   }
 }
 
-}
+}  // namespace hash

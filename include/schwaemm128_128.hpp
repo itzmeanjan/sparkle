@@ -4,6 +4,22 @@
 // Schwaemm128-128 Authenticated Encryption with Associated Data ( AEAD ) Scheme
 namespace schwaemm128_128 {
 
+// Rate width of permutation state, in bytes
+constexpr size_t R = 16ul;
+
+// Capacity width of permutation state, in bytes
+constexpr size_t C = 16ul;
+
+// # -of branches in permutation state; each branch is a tuple of two 32 -bit
+// unsigned words
+constexpr size_t BR = ((R + C) >> 2) >> 1;
+
+// # -of steps in slim variant of sparkle permutation
+constexpr size_t S = 7ul;
+
+// # -of steps in big variant of sparkle permutation
+constexpr size_t B = 10ul;
+
 // To distinguish padded associated data block from non-padded one, this
 // constant is XORed into inner part of permutation state, when processing last
 // associated data block
@@ -37,31 +53,18 @@ constexpr uint32_t M1 = (3u ^ (1u << 2)) << 24;
 //
 // See algorithm 2.17 of Sparkle Specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
-static inline void
-encrypt(const uint8_t* const __restrict key,   // 16 -bytes secret key
-        const uint8_t* const __restrict nonce, // 16 -bytes nonce
-        const uint8_t* const __restrict data,  // N (>=0) -bytes associated data
-        const size_t d_len,                    // len(data) = N | N >= 0
-        const uint8_t* const __restrict txt,   // N (>=0) -bytes plain text
-        uint8_t* const __restrict enc,         // N (>=0) -bytes cipher text
-        const size_t ct_len,                   // len(txt) = len(enc) = N | >= 0
-        uint8_t* const __restrict tag          // 16 -bytes authentication tag
-)
-{
-  using namespace aead;
-
-  uint32_t state[8];
-
-  initialize<16ul, 16ul, 4ul, 10ul>(state, key, nonce);
-
-  if (d_len > 0) {
-    process_data<16ul, 16ul, A0, A1, 4ul, 7ul, 10ul>(state, data, d_len);
-  }
-  if (ct_len > 0) {
-    process_text<16ul, 16ul, M0, M1, 4ul, 7ul, 10ul>(state, txt, enc, ct_len);
-  }
-
-  finalize<16ul, 16ul>(state, key, tag);
+static inline void encrypt(
+    const uint8_t* const __restrict key,    // 16 -bytes secret key
+    const uint8_t* const __restrict nonce,  // 16 -bytes nonce
+    const uint8_t* const __restrict data,   // N (>=0) -bytes associated data
+    const size_t d_len,                     // len(data) = N | N >= 0
+    const uint8_t* const __restrict txt,    // N (>=0) -bytes plain text
+    uint8_t* const __restrict enc,          // N (>=0) -bytes cipher text
+    const size_t ct_len,                    // len(txt) = len(enc) = N | >= 0
+    uint8_t* const __restrict tag           // 16 -bytes authentication tag
+) {
+  aead::encrypt<R, C, A0, A1, M0, M1, BR, S, B>(key, nonce, data, d_len, txt,
+                                                enc, ct_len, tag);
 }
 
 // Schwaemm128-128 verified decryption, which computes N (>=0) -bytes of
@@ -80,38 +83,18 @@ encrypt(const uint8_t* const __restrict key,   // 16 -bytes secret key
 //
 // See algorithm 2.18 of Sparkle Specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
-static inline bool
-decrypt(const uint8_t* const __restrict key,   // 16 -bytes secret key
-        const uint8_t* const __restrict nonce, // 16 -bytes nonce
-        const uint8_t* const __restrict tag,   // 16 -bytes authentication tag
-        const uint8_t* const __restrict data,  // N (>=0) -bytes associated data
-        const size_t d_len,                    // len(data) = N | N >= 0
-        const uint8_t* const __restrict enc,   // N (>=0) -bytes encrypted text
-        uint8_t* const __restrict dec,         // N (>=0) -bytes decrypted text
-        const size_t ct_len                    // len(enc) = len(dec) = N | >= 0
-)
-{
-  using namespace aead;
-
-  uint32_t state[8];
-  uint8_t tag_[16];
-
-  initialize<16ul, 16ul, 4ul, 10ul>(state, key, nonce);
-
-  if (d_len > 0) {
-    process_data<16ul, 16ul, A0, A1, 4ul, 7ul, 10ul>(state, data, d_len);
-  }
-  if (ct_len > 0) {
-    process_cipher<16ul, 16ul, M0, M1, 4ul, 7ul, 10ul>(state, enc, dec, ct_len);
-  }
-
-  finalize<16ul, 16ul>(state, key, tag_);
-
-  bool flag = false;
-  for (size_t i = 0; i < 16; i++) {
-    flag |= (tag[i] ^ tag_[i]);
-  }
-  return !flag;
+static inline bool decrypt(
+    const uint8_t* const __restrict key,    // 16 -bytes secret key
+    const uint8_t* const __restrict nonce,  // 16 -bytes nonce
+    const uint8_t* const __restrict tag,    // 16 -bytes authentication tag
+    const uint8_t* const __restrict data,   // N (>=0) -bytes associated data
+    const size_t d_len,                     // len(data) = N | N >= 0
+    const uint8_t* const __restrict enc,    // N (>=0) -bytes encrypted text
+    uint8_t* const __restrict dec,          // N (>=0) -bytes decrypted text
+    const size_t ct_len                     // len(enc) = len(dec) = N | >= 0
+) {
+  return aead::decrypt<R, C, A0, A1, M0, M1, BR, S, B>(key, nonce, tag, data,
+                                                       d_len, enc, dec, ct_len);
 }
 
-}
+}  // namespace schwaemm128_128

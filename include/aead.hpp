@@ -1,7 +1,8 @@
 #pragma once
+#include <cstring>
+
 #include "sparkle.hpp"
 #include "utils.hpp"
-#include <cstring>
 
 // Common ( generic ) routines used in Schwaemm AEAD implementation
 namespace aead {
@@ -12,19 +13,15 @@ namespace aead {
 //
 // See algorithm 2.13 in Sparkle specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
-template<const size_t RATE,
-         const size_t CAPACITY,
-         const size_t nb,
-         const size_t ns>
-static inline void
-initialize(
-  uint32_t* const __restrict state,     // ((RATE + CAPACITY) << 3) -bit state
-  const uint8_t* const __restrict key,  // CAPACITY -bytes secret key
-  const uint8_t* const __restrict nonce // RATE -bytes nonce
-)
-{
-  constexpr size_t RATE_W = RATE >> 2;         // # -of 32 -bit words
-  constexpr size_t CAPACITY_W = CAPACITY >> 2; // # -of 32 -bit words
+template <const size_t RATE, const size_t CAPACITY, const size_t nb,
+          const size_t ns>
+static inline void initialize(
+    uint32_t* const __restrict state,     // ((RATE + CAPACITY) << 3) -bit state
+    const uint8_t* const __restrict key,  // CAPACITY -bytes secret key
+    const uint8_t* const __restrict nonce  // RATE -bytes nonce
+) {
+  constexpr size_t RATE_W = RATE >> 2;          // # -of 32 -bit words
+  constexpr size_t CAPACITY_W = CAPACITY >> 2;  // # -of 32 -bit words
 
   if constexpr (is_little_endian()) {
     std::memcpy(state, nonce, RATE);
@@ -76,10 +73,8 @@ initialize(
 // `s1 || s2 = s` meaning |s1| = |s2| = (RATE >> 1) << 3 -bit
 //
 // To be more specific, `s` is actually outer part of permutation state !
-template<const size_t RATE>
-static inline void
-feistel_swap(uint32_t* const __restrict s)
-{
+template <const size_t RATE>
+static inline void feistel_swap(uint32_t* const __restrict s) {
   if constexpr ((RATE ^ 32ul) == 0) {
     std::swap(s[0], s[4]);
     std::swap(s[1], s[5]);
@@ -112,13 +107,11 @@ feistel_swap(uint32_t* const __restrict s)
 //
 // See section 2.3.2 of Sparkle Specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
-template<const size_t RATE>
-static inline void
-rho1(uint32_t* const __restrict s,      // RATE -bytes wide
-     const uint32_t* const __restrict d // RATE -bytes wide
-)
-{
-  constexpr size_t RATE_W = RATE >> 2; // # -of 32 -bit words
+template <const size_t RATE>
+static inline void rho1(uint32_t* const __restrict s,       // RATE -bytes wide
+                        const uint32_t* const __restrict d  // RATE -bytes wide
+) {
+  constexpr size_t RATE_W = RATE >> 2;  // # -of 32 -bit words
 
   feistel_swap<RATE>(s);
 
@@ -137,13 +130,11 @@ rho1(uint32_t* const __restrict s,      // RATE -bytes wide
 //
 // See section 2.3.2 of Sparkle Specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
-template<const size_t RATE>
-static inline void
-rho2(uint32_t* const __restrict s,      // RATE -bytes wide
-     const uint32_t* const __restrict d // RATE -bytes wide
-)
-{
-  constexpr size_t RATE_W = RATE >> 2; // # -of 32 -bit words
+template <const size_t RATE>
+static inline void rho2(uint32_t* const __restrict s,       // RATE -bytes wide
+                        const uint32_t* const __restrict d  // RATE -bytes wide
+) {
+  constexpr size_t RATE_W = RATE >> 2;  // # -of 32 -bit words
 
 #if defined __clang__
 #pragma unroll
@@ -160,13 +151,12 @@ rho2(uint32_t* const __restrict s,      // RATE -bytes wide
 //
 // See section 2.3.2 of Sparkle Specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
-template<const size_t RATE>
-static inline void
-rhoprime1(uint32_t* const __restrict s,      // RATE -bytes wide
-          const uint32_t* const __restrict d // RATE -bytes wide
-)
-{
-  constexpr size_t RATE_W = RATE >> 2; // # -of 32 -bit words
+template <const size_t RATE>
+static inline void rhoprime1(
+    uint32_t* const __restrict s,       // RATE -bytes wide
+    const uint32_t* const __restrict d  // RATE -bytes wide
+) {
+  constexpr size_t RATE_W = RATE >> 2;  // # -of 32 -bit words
 
   uint32_t s_[RATE_W];
   std::memcpy(s_, s, RATE);
@@ -188,13 +178,12 @@ rhoprime1(uint32_t* const __restrict s,      // RATE -bytes wide
 //
 // See section 2.3.2 of Sparkle Specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
-template<const size_t RATE>
-static inline void
-rhoprime2(uint32_t* const __restrict s,      // RATE -bytes wide
-          const uint32_t* const __restrict d // RATE -bytes wide
-)
-{
-  constexpr size_t RATE_W = RATE >> 2; // # -of 32 -bit words
+template <const size_t RATE>
+static inline void rhoprime2(
+    uint32_t* const __restrict s,       // RATE -bytes wide
+    const uint32_t* const __restrict d  // RATE -bytes wide
+) {
+  constexpr size_t RATE_W = RATE >> 2;  // # -of 32 -bit words
 
 #if defined __clang__
 #pragma unroll
@@ -208,13 +197,11 @@ rhoprime2(uint32_t* const __restrict s,      // RATE -bytes wide
 
 // Rate whitening layer, applied to 128 -bit wide inner part of permutation
 // state, for Schwaemm256-128 AEAD
-template<const size_t CAPACITY>
-static inline void
-omega(const uint32_t* const __restrict in, // 128 -bit
-      uint32_t* const __restrict out       // 256 -bit
-)
-{
-  constexpr size_t CAPACITY_W = CAPACITY >> 2; // # -of 32 -bit words
+template <const size_t CAPACITY>
+static inline void omega(const uint32_t* const __restrict in,  // 128 -bit
+                         uint32_t* const __restrict out        // 256 -bit
+) {
+  constexpr size_t CAPACITY_W = CAPACITY >> 2;  // # -of 32 -bit words
 
   std::memcpy(out, in, CAPACITY);
   std::memcpy(out + CAPACITY_W, in, CAPACITY);
@@ -223,21 +210,15 @@ omega(const uint32_t* const __restrict in, // 128 -bit
 // Generic routine for consuming non-empty associated data into permutation
 // state using algorithm 2.13 of Sparkle specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
-template<const size_t RATE,
-         const size_t CAPACITY,
-         const uint32_t CONST_A0,
-         const uint32_t CONST_A1,
-         const size_t nb,
-         const size_t ns_slim,
-         const size_t ns_big>
-static inline void
-process_data(
-  uint32_t* const __restrict state,     // permutation state
-  const uint8_t* const __restrict data, // N (>0) -bytes associated data
-  const size_t d_len                    // len(data) = N -bytes | N > 0
-)
-{
-  constexpr size_t RATE_W = RATE >> 2; // # -of 32 -bit words
+template <const size_t RATE, const size_t CAPACITY, const uint32_t CONST_A0,
+          const uint32_t CONST_A1, const size_t nb, const size_t ns_slim,
+          const size_t ns_big>
+static inline void process_data(
+    uint32_t* const __restrict state,      // permutation state
+    const uint8_t* const __restrict data,  // N (>0) -bytes associated data
+    const size_t d_len                     // len(data) = N -bytes | N > 0
+) {
+  constexpr size_t RATE_W = RATE >> 2;  // # -of 32 -bit words
 
   uint32_t buffer0[RATE_W ^ 1];
   uint32_t buffer1[RATE_W];
@@ -319,12 +300,12 @@ process_data(
     word |= static_cast<uint32_t>(data[b_off + off + i]) << (i << 3);
   }
 
-  const uint32_t words[2] = { 0u, word };
+  const uint32_t words[2] = {0u, word};
   buffer0[rb_full_words] = words[rb_full_words < RATE_W];
 
   rho1<RATE>(state, buffer0);
 
-  constexpr uint32_t consts[2] = { CONST_A1, CONST_A0 };
+  constexpr uint32_t consts[2] = {CONST_A1, CONST_A0};
   state[(nb << 1) - 1] ^= consts[rb_full_words < RATE_W];
 
   if constexpr (((RATE ^ 32ul) | (CAPACITY ^ 16ul)) == 0) {
@@ -356,21 +337,16 @@ process_data(
 // state, while producing equal many cipher text bytes, using algorithm 2.{13,
 // 15, 17, 19} of Sparkle specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
-template<const size_t RATE,
-         const size_t CAPACITY,
-         const uint32_t CONST_M0,
-         const uint32_t CONST_M1,
-         const size_t nb,
-         const size_t ns_slim,
-         const size_t ns_big>
-static inline void
-process_text(uint32_t* const __restrict state,    // permutation state
-             const uint8_t* const __restrict txt, // N (>0) -bytes plain text
-             uint8_t* const __restrict enc, // N (>0) -bytes encrypted text
-             const size_t ct_len            // len(txt) = len(enc) = N | N > 0
-)
-{
-  constexpr size_t RATE_W = RATE >> 2; // # -of 32 -bit words
+template <const size_t RATE, const size_t CAPACITY, const uint32_t CONST_M0,
+          const uint32_t CONST_M1, const size_t nb, const size_t ns_slim,
+          const size_t ns_big>
+static inline void process_text(
+    uint32_t* const __restrict state,     // permutation state
+    const uint8_t* const __restrict txt,  // N (>0) -bytes plain text
+    uint8_t* const __restrict enc,        // N (>0) -bytes encrypted text
+    const size_t ct_len                   // len(txt) = len(enc) = N | N > 0
+) {
+  constexpr size_t RATE_W = RATE >> 2;  // # -of 32 -bit words
 
   uint32_t buffer0[RATE_W + 1];
   uint32_t buffer1[RATE_W];
@@ -475,7 +451,7 @@ process_text(uint32_t* const __restrict state,    // permutation state
     word |= static_cast<uint32_t>(txt[idx]) << (i << 3);
   }
 
-  const uint32_t words[2] = { 0u, word };
+  const uint32_t words[2] = {0u, word};
   buffer0[rb_full_words] = words[rb_full_words < RATE_W];
 
   std::memcpy(buffer2, state, RATE);
@@ -502,7 +478,7 @@ process_text(uint32_t* const __restrict state,    // permutation state
 
   rho1<RATE>(state, buffer0);
 
-  constexpr uint32_t consts[2] = { CONST_M1, CONST_M0 };
+  constexpr uint32_t consts[2] = {CONST_M1, CONST_M0};
   state[(nb << 1) - 1] ^= consts[rb_full_words < RATE_W];
 
   if constexpr (((RATE ^ 32ul) | (CAPACITY ^ 16ul)) == 0) {
@@ -534,22 +510,16 @@ process_text(uint32_t* const __restrict state,    // permutation state
 // into permutation state, while producing equal many decrypted text bytes,
 // using algorithm 2.{14, 16, 18, 20} of Sparkle specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
-template<const size_t RATE,
-         const size_t CAPACITY,
-         const uint32_t CONST_M0,
-         const uint32_t CONST_M1,
-         const size_t nb,
-         const size_t ns_slim,
-         const size_t ns_big>
-static inline void
-process_cipher(
-  uint32_t* const __restrict state,    // permutation state
-  const uint8_t* const __restrict enc, // N (>0) -bytes encrypted text
-  uint8_t* const __restrict dec,       // N (>0) -bytes decrypted text
-  const size_t ct_len                  // len(enc) = len(dec) = N | N > 0
-)
-{
-  constexpr size_t RATE_W = RATE >> 2; // # -of 32 -bit words
+template <const size_t RATE, const size_t CAPACITY, const uint32_t CONST_M0,
+          const uint32_t CONST_M1, const size_t nb, const size_t ns_slim,
+          const size_t ns_big>
+static inline void process_cipher(
+    uint32_t* const __restrict state,     // permutation state
+    const uint8_t* const __restrict enc,  // N (>0) -bytes encrypted text
+    uint8_t* const __restrict dec,        // N (>0) -bytes decrypted text
+    const size_t ct_len                   // len(enc) = len(dec) = N | N > 0
+) {
+  constexpr size_t RATE_W = RATE >> 2;  // # -of 32 -bit words
 
   uint32_t buffer0[RATE_W + 1];
   uint32_t buffer1[RATE_W];
@@ -654,7 +624,7 @@ process_cipher(
     word |= static_cast<uint32_t>(enc[idx]) << (i << 3);
   }
 
-  const uint32_t words[2] = { 0u, word };
+  const uint32_t words[2] = {0u, word};
   buffer0[rb_full_words] = words[rb_full_words < RATE_W];
 
   std::memcpy(buffer2, state, RATE);
@@ -697,7 +667,7 @@ process_cipher(
     rhoprime1<RATE>(state, buffer0);
   }
 
-  constexpr uint32_t consts[2] = { CONST_M1, CONST_M0 };
+  constexpr uint32_t consts[2] = {CONST_M1, CONST_M0};
   state[(nb << 1) - 1] ^= consts[rb_full_words < RATE_W];
 
   if constexpr (((RATE ^ 32ul) | (CAPACITY ^ 16ul)) == 0) {
@@ -730,15 +700,14 @@ process_cipher(
 //
 // See algorithm 2.13 of Sparkle specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
-template<const size_t RATE, const size_t CAPACITY>
-static inline void
-finalize(const uint32_t* const __restrict state, // permutation state
-         const uint8_t* const __restrict key,    // CAPACITY -bytes secret key
-         uint8_t* const __restrict tag           // CAPACITY -bytes tag
-)
-{
-  constexpr size_t RATE_W = RATE >> 2;         // # -of 32 -bit words
-  constexpr size_t CAPACITY_W = CAPACITY >> 2; // # -of 32 -bit words
+template <const size_t RATE, const size_t CAPACITY>
+static inline void finalize(
+    const uint32_t* const __restrict state,  // permutation state
+    const uint8_t* const __restrict key,     // CAPACITY -bytes secret key
+    uint8_t* const __restrict tag            // CAPACITY -bytes tag
+) {
+  constexpr size_t RATE_W = RATE >> 2;          // # -of 32 -bit words
+  constexpr size_t CAPACITY_W = CAPACITY >> 2;  // # -of 32 -bit words
 
   uint32_t buffer[CAPACITY_W];
 
@@ -789,4 +758,85 @@ finalize(const uint32_t* const __restrict state, // permutation state
   }
 }
 
+// Generic authenticated encryption routine which can be used with SchwaemmX-Y
+// AEAD | X, Y ∈ {128, 192, 256}
+//
+// i)   R = X >> 3 (bytes)
+// ii)  C = Y >> 3 (bytes)
+// iii) A{0, 1} = constant to be used when mixing associated data into state
+// iv)  M{0, 1} = constant to be used when mixing plain text into state
+// v)   BR = # -of branches in permutation state | = ((R + C) >> 2) >> 1
+// vi)  S = # -of steps in slim variant of Sparkle permutation
+// vii) B = # -of steps in big variant of Sparkle permutation
+template <const size_t R, const size_t C, const uint32_t A0, const uint32_t A1,
+          const uint32_t M0, const uint32_t M1, const size_t BR, const size_t S,
+          const size_t B>
+static inline void encrypt(
+    const uint8_t* const __restrict key,    // C -bytes secret key
+    const uint8_t* const __restrict nonce,  // R -bytes nonce
+    const uint8_t* const __restrict data,   // N (>=0) -bytes associated data
+    const size_t d_len,                     // len(data) = N | N >= 0
+    const uint8_t* const __restrict txt,    // N (>=0) -bytes plain text
+    uint8_t* const __restrict enc,          // N (>=0) -bytes cipher text
+    const size_t ct_len,                    // len(txt) = len(enc) = N | >= 0
+    uint8_t* const __restrict tag           // C -bytes authentication tag
+) {
+  uint32_t state[BR << 1];
+
+  initialize<R, C, BR, B>(state, key, nonce);
+
+  if (d_len > 0) {
+    process_data<R, C, A0, A1, BR, S, B>(state, data, d_len);
+  }
+  if (ct_len > 0) {
+    process_text<R, C, M0, M1, BR, S, B>(state, txt, enc, ct_len);
+  }
+
+  finalize<R, C>(state, key, tag);
 }
+
+// Generic verified decryption routine which can be used with SchwaemmX-Y
+// AEAD | X, Y ∈ {128, 192, 256}
+//
+// i)   R = X >> 3 (bytes)
+// ii)  C = Y >> 3 (bytes)
+// iii) A{0, 1} = constant to be used when mixing associated data into state
+// iv)  M{0, 1} = constant to be used when mixing plain text into state
+// v)   BR = # -of branches in permutation state | = ((R + C) >> 2) >> 1
+// vi)  S = # -of steps in slim variant of Sparkle permutation
+// vii) B = # -of steps in big variant of Sparkle permutation
+template <const size_t R, const size_t C, const uint32_t A0, const uint32_t A1,
+          const uint32_t M0, const uint32_t M1, const size_t BR, const size_t S,
+          const size_t B>
+static inline bool decrypt(
+    const uint8_t* const __restrict key,    // C -bytes secret key
+    const uint8_t* const __restrict nonce,  // R -bytes nonce
+    const uint8_t* const __restrict tag,    // C -bytes authentication tag
+    const uint8_t* const __restrict data,   // N (>=0) -bytes associated data
+    const size_t d_len,                     // len(data) = N | N >= 0
+    const uint8_t* const __restrict enc,    // N (>=0) -bytes encrypted text
+    uint8_t* const __restrict dec,          // N (>=0) -bytes decrypted text
+    const size_t ct_len                     // len(enc) = len(dec) = N | >= 0
+) {
+  uint32_t state[BR << 1];
+  uint8_t tag_[C];
+
+  initialize<R, C, BR, B>(state, key, nonce);
+
+  if (d_len > 0) {
+    process_data<R, C, A0, A1, BR, S, B>(state, data, d_len);
+  }
+  if (ct_len > 0) {
+    process_cipher<R, C, M0, M1, BR, S, B>(state, enc, dec, ct_len);
+  }
+
+  finalize<R, C>(state, key, tag_);
+
+  bool flag = false;
+  for (size_t i = 0; i < C; i++) {
+    flag |= (tag[i] ^ tag_[i]);
+  }
+  return !flag;
+}
+
+}  // namespace aead

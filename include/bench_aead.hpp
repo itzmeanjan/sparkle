@@ -1,15 +1,14 @@
 #pragma once
+#include <benchmark/benchmark.h>
+
 #include "schwaemm128_128.hpp"
 #include "schwaemm192_192.hpp"
 #include "schwaemm256_128.hpp"
 #include "schwaemm256_256.hpp"
 #include "utils.hpp"
-#include <benchmark/benchmark.h>
 
 // Benchmark Schwaemm256-128 Authenticated Encryption Scheme on CPU
-static void
-schwaemm256_128_encrypt(benchmark::State& state)
-{
+static void schwaemm256_128_encrypt(benchmark::State& state) {
   const size_t ct_len = state.range(0);
   const size_t dt_len = state.range(1);
 
@@ -55,9 +54,7 @@ schwaemm256_128_encrypt(benchmark::State& state)
 }
 
 // Benchmark Schwaemm256-128 Verified Decryption Scheme on CPU
-static void
-schwaemm256_128_decrypt(benchmark::State& state)
-{
+static void schwaemm256_128_decrypt(benchmark::State& state) {
   const size_t ct_len = state.range(0);
   const size_t dt_len = state.range(1);
 
@@ -109,9 +106,7 @@ schwaemm256_128_decrypt(benchmark::State& state)
 }
 
 // Benchmark Schwaemm192-192 Authenticated Encryption Scheme on CPU
-static void
-schwaemm192_192_encrypt(benchmark::State& state)
-{
+static void schwaemm192_192_encrypt(benchmark::State& state) {
   const size_t ct_len = state.range(0);
   const size_t dt_len = state.range(1);
   constexpr size_t KNT_LEN = 24;
@@ -158,9 +153,7 @@ schwaemm192_192_encrypt(benchmark::State& state)
 }
 
 // Benchmark Schwaemm192-192 Verified Decryption Scheme on CPU
-static void
-schwaemm192_192_decrypt(benchmark::State& state)
-{
+static void schwaemm192_192_decrypt(benchmark::State& state) {
   const size_t ct_len = state.range(0);
   const size_t dt_len = state.range(1);
   constexpr size_t KNT_LEN = 24;
@@ -213,9 +206,7 @@ schwaemm192_192_decrypt(benchmark::State& state)
 }
 
 // Benchmark Schwaemm128-128 Authenticated Encryption Scheme on CPU
-static void
-schwaemm128_128_encrypt(benchmark::State& state)
-{
+static void schwaemm128_128_encrypt(benchmark::State& state) {
   const size_t ct_len = state.range(0);
   const size_t dt_len = state.range(1);
   constexpr size_t KNT_LEN = 16;
@@ -262,9 +253,7 @@ schwaemm128_128_encrypt(benchmark::State& state)
 }
 
 // Benchmark Schwaemm128-128 Verified Decryption Scheme on CPU
-static void
-schwaemm128_128_decrypt(benchmark::State& state)
-{
+static void schwaemm128_128_decrypt(benchmark::State& state) {
   const size_t ct_len = state.range(0);
   const size_t dt_len = state.range(1);
   constexpr size_t KNT_LEN = 16;
@@ -317,9 +306,7 @@ schwaemm128_128_decrypt(benchmark::State& state)
 }
 
 // Benchmark Schwaemm256-256 Authenticated Encryption Scheme on CPU
-static void
-schwaemm256_256_encrypt(benchmark::State& state)
-{
+static void schwaemm256_256_encrypt(benchmark::State& state) {
   const size_t ct_len = state.range(0);
   const size_t dt_len = state.range(1);
 
@@ -367,9 +354,7 @@ schwaemm256_256_encrypt(benchmark::State& state)
 }
 
 // Benchmark Schwaemm256-256 Verified Decryption Scheme on CPU
-static void
-schwaemm256_256_decrypt(benchmark::State& state)
-{
+static void schwaemm256_256_decrypt(benchmark::State& state) {
   const size_t ct_len = state.range(0);
   const size_t dt_len = state.range(1);
 
