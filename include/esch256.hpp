@@ -1,7 +1,8 @@
 #pragma once
+#include <cstring>
+
 #include "hash.hpp"
 #include "utils.hpp"
-#include <cstring>
 
 // Esch256 hash function, based on Sparkle permutation
 namespace esch256 {
@@ -20,14 +21,13 @@ namespace esch256 {
 //
 // See algorithm 2.9 of Sparkle specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
-static inline void
-hash(const uint8_t* const __restrict in, // input message
-     const size_t ilen,                  // len(in) = N | N >= 0
-     uint8_t* const __restrict out       // 32 -bytes output digest
-)
-{
-  uint32_t state[12] = { 0u };
-  uint32_t buffer[6] = { 0u };
+static inline void hash(
+    const uint8_t* const __restrict in,  // input message
+    const size_t ilen,                   // len(in) = N | N >= 0
+    uint8_t* const __restrict out        // 32 -bytes output digest
+) {
+  uint32_t state[12] = {0u};
+  uint32_t buffer[6] = {0u};
 
   size_t r_bytes = ilen;
   while (r_bytes > hash::RATE) {
@@ -85,10 +85,10 @@ hash(const uint8_t* const __restrict in, // input message
     word |= static_cast<uint32_t>(in[b_off + off + i]) << (i << 3);
   }
 
-  const uint32_t words[2] = { 0u, word };
+  const uint32_t words[2] = {0u, word};
   buffer[rb_full_words] = words[rb_full_words < 4];
 
-  constexpr uint32_t consts[2] = { hash::CONST_M1, hash::CONST_M0 };
+  constexpr uint32_t consts[2] = {hash::CONST_M1, hash::CONST_M0};
   state[5] ^= consts[r_bytes < hash::RATE];
 
   hash::feistel<384ul>(state, buffer);
@@ -135,4 +135,4 @@ hash(const uint8_t* const __restrict in, // input message
   }
 }
 
-}
+}  // namespace esch256

@@ -10,18 +10,18 @@ namespace sparkle {
 // Sparkle constants which are XORed into permutation state, see first four
 // lines of algorithm 2.{1, 2, 3} in Sparkle Specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
-constexpr uint32_t CONST[8] = { 0xB7E15162u, 0xBF715880u, 0x38B4DA56u,
-                                0x324E7738u, 0xBB1185EBu, 0x4F7C7B57u,
-                                0xCFBFA1C8u, 0xC2B3293Du };
+constexpr uint32_t CONST[8] = {0xB7E15162u, 0xBF715880u, 0x38B4DA56u,
+                               0x324E7738u, 0xBB1185EBu, 0x4F7C7B57u,
+                               0xCFBFA1C8u, 0xC2B3293Du};
 
 // ARX-box Alzette is a 64 -bit block cipher used as one building block of
 // Sparkle Permutation
 //
 // See section 2.1.1 of Sparkle Specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
-static inline std::pair<uint32_t, uint32_t>
-alzette(const uint32_t x, const uint32_t y, const uint32_t c)
-{
+static inline std::pair<uint32_t, uint32_t> alzette(const uint32_t x,
+                                                    const uint32_t y,
+                                                    const uint32_t c) {
   uint32_t lw = x + std::rotr(y, 31);
   uint32_t rw = y ^ std::rotr(lw, 24);
   lw ^= c;
@@ -46,9 +46,7 @@ alzette(const uint32_t x, const uint32_t y, const uint32_t c)
 //
 // See algorithm 2.5 of Sparkle Specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
-static inline void
-diffusion_layer_4(uint32_t* const state)
-{
+static inline void diffusion_layer_4(uint32_t* const state) {
   // feistel round
 
   uint32_t tx = state[0] ^ state[2];
@@ -87,9 +85,7 @@ diffusion_layer_4(uint32_t* const state)
 //
 // See algorithm 2.6 of Sparkle Specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
-static inline void
-diffusion_layer_6(uint32_t* const state)
-{
+static inline void diffusion_layer_6(uint32_t* const state) {
   // feistel round
 
   uint32_t tx = state[0] ^ state[2] ^ state[4];
@@ -136,9 +132,7 @@ diffusion_layer_6(uint32_t* const state)
 //
 // See algorithm 2.6 of Sparkle Specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
-static inline void
-diffusion_layer_8(uint32_t* const state)
-{
+static inline void diffusion_layer_8(uint32_t* const state) {
   // feistel round
 
   uint32_t tx = state[0] ^ state[2] ^ state[4] ^ state[6];
@@ -197,10 +191,8 @@ diffusion_layer_8(uint32_t* const state)
 //
 // For implementation specific details, I suggest going through
 // algorithm 2.1, 2.2 & 2.3 of above linked document.
-template<const size_t nb, const size_t ns>
-static inline void
-sparkle(uint32_t* const state)
-{
+template <const size_t nb, const size_t ns>
+static inline void sparkle(uint32_t* const state) {
   for (size_t i = 0; i < ns; i++) {
     state[1] = state[1] ^ CONST[i & 7ul];
     state[3] = state[3] ^ static_cast<uint32_t>(i);
@@ -275,4 +267,4 @@ sparkle(uint32_t* const state)
   }
 }
 
-}
+}  // namespace sparkle
