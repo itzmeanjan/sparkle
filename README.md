@@ -248,3 +248,21 @@ schwaemm256_256_decrypt/2048/32      13063 ns        13053 ns        52986 bytes
 schwaemm256_256_encrypt/4096/32      25616 ns        25599 ns        27289 bytes_per_second=153.784M/s
 schwaemm256_256_decrypt/4096/32      25325 ns        25310 ns        27221 bytes_per_second=155.543M/s
 ```
+
+## Usage
+
+Using Sparkle C++ API is as easy as including proper header files & letting compiler know where it can find these header files, which is `./include` directory.
+
+If you're interested in
+
+- Esch256 Hash, import `./include/esch256.hpp`
+- Esch384 Hash, import `./include/esch384.hpp`
+- Schwaemm128-128 AEAD, import `./include/schwaemm128_128.hpp`
+- Schwaemm192-192 AEAD, import `./include/schwaemm192_192.hpp`
+- Schwaemm256-128 AEAD, import `./include/schwaemm256_128.hpp`
+- Schwaemm256-256 AEAD, import `./include/schwaemm256_256.hpp`
+
+I'm maintaining following examples for practically demonstrating usage of Sparkle C++ API.
+
+- For Esch{256, 384} Hash, see [here](https://github.com/itzmeanjan/sparkle/blob/96c33f8/example/hash.cpp)
+- For Schwaemm{128, 192, 256}-{128, 192, 256} AEAD, see [here](https://github.com/itzmeanjan/sparkle/blob/96c33f8/example/aead.cpp)
