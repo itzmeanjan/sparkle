@@ -6,17 +6,22 @@
 #include "schwaemm256_128.hpp"
 #include "schwaemm256_256.hpp"
 
-int main() {
-  constexpr size_t d_len = 32ul;
-  constexpr size_t ct_len = 32ul;
+// Compile it with
+//
+// g++ -std=c++20 -Wall -I ./include example/aead.cpp
+int
+main()
+{
+  constexpr size_t d_len = 32ul;  // associate data byte length
+  constexpr size_t ct_len = 32ul; // plain/ cipher text byte length
 
   uint8_t data[d_len];
   uint8_t txt[ct_len];
   uint8_t enc[ct_len];
   uint8_t dec[ct_len];
 
-  random_data(data, d_len);
-  random_data(txt, d_len);
+  random_data(data, d_len); // generate random associated data
+  random_data(txt, d_len);  // generate random plain text
 
   std::cout << "data = " << to_hex(data, sizeof(data)) << std::endl;
   std::cout << "text = " << to_hex(txt, sizeof(txt)) << std::endl;
@@ -36,7 +41,9 @@ int main() {
 
     using namespace schwaemm128_128;
 
+    // authenticated encryption with Schwaemm128-128 AEAD
     encrypt(key, nonce, data, d_len, txt, enc, ct_len, tag);
+    // verified decryption with Schwaemm128-128 AEAD
     const bool f = decrypt(key, nonce, tag, data, d_len, enc, dec, ct_len);
 
     assert(f);
@@ -70,7 +77,9 @@ int main() {
 
     using namespace schwaemm192_192;
 
+    // authenticated encryption with Schwaemm192-192 AEAD
     encrypt(key, nonce, data, d_len, txt, enc, ct_len, tag);
+    // verified decryption with Schwaemm192-192 AEAD
     const bool f = decrypt(key, nonce, tag, data, d_len, enc, dec, ct_len);
 
     assert(f);
@@ -104,7 +113,9 @@ int main() {
 
     using namespace schwaemm256_128;
 
+    // authenticated encryption with Schwaemm256-128 AEAD
     encrypt(key, nonce, data, d_len, txt, enc, ct_len, tag);
+    // verified decryption with Schwaemm256-128 AEAD
     const bool f = decrypt(key, nonce, tag, data, d_len, enc, dec, ct_len);
 
     assert(f);
@@ -138,7 +149,9 @@ int main() {
 
     using namespace schwaemm256_256;
 
+    // authenticated encryption with Schwaemm256-256 AEAD
     encrypt(key, nonce, data, d_len, txt, enc, ct_len, tag);
+    // verified decryption with Schwaemm256-256 AEAD
     const bool f = decrypt(key, nonce, tag, data, d_len, enc, dec, ct_len);
 
     assert(f);
