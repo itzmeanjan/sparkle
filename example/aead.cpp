@@ -9,19 +9,17 @@
 // Compile it with
 //
 // g++ -std=c++20 -Wall -I ./include example/aead.cpp
-int
-main()
-{
-  constexpr size_t d_len = 32ul;  // associate data byte length
-  constexpr size_t ct_len = 32ul; // plain/ cipher text byte length
+int main() {
+  constexpr size_t d_len = 32ul;   // associate data byte length
+  constexpr size_t ct_len = 32ul;  // plain/ cipher text byte length
 
   uint8_t data[d_len];
   uint8_t txt[ct_len];
   uint8_t enc[ct_len];
   uint8_t dec[ct_len];
 
-  random_data(data, d_len); // generate random associated data
-  random_data(txt, d_len);  // generate random plain text
+  random_data(data, d_len);  // generate random associated data
+  random_data(txt, d_len);   // generate random plain text
 
   std::cout << "data = " << to_hex(data, sizeof(data)) << std::endl;
   std::cout << "text = " << to_hex(txt, sizeof(txt)) << std::endl;
