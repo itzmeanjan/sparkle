@@ -55,29 +55,29 @@ static inline void diffusion_layer_4(uint32_t* const state) {
   tx = std::rotl(tx ^ (tx << 16), 16);
   ty = std::rotl(ty ^ (ty << 16), 16);
 
-  state[5] = state[5] ^ state[1] ^ tx;
-  state[7] = state[7] ^ state[3] ^ tx;
+  state[5] ^= state[1] ^ tx;
+  state[7] ^= state[3] ^ tx;
 
-  state[4] = state[4] ^ state[0] ^ ty;
-  state[6] = state[6] ^ state[2] ^ ty;
+  state[4] ^= state[0] ^ ty;
+  state[6] ^= state[2] ^ ty;
 
   // branch permutation
 
-  uint32_t t0 = state[4];
-  uint32_t t1 = state[6];
+  const auto t0 = state[4];
+  const auto t1 = state[6];
 
   state[4] = state[0];
   state[6] = state[2];
   state[0] = t1;
   state[2] = t0;
 
-  t0 = state[5];
-  t1 = state[7];
+  const auto t2 = state[5];
+  const auto t3 = state[7];
 
   state[5] = state[1];
   state[7] = state[3];
-  state[1] = t1;
-  state[3] = t0;
+  state[1] = t3;
+  state[3] = t2;
 }
 
 // Diffusion Layer `ℒ6`, used when branch count = 6 i.e. permutation state
@@ -94,19 +94,19 @@ static inline void diffusion_layer_6(uint32_t* const state) {
   tx = std::rotl(tx ^ (tx << 16), 16);
   ty = std::rotl(ty ^ (ty << 16), 16);
 
-  state[7] = state[7] ^ state[1] ^ tx;
-  state[9] = state[9] ^ state[3] ^ tx;
-  state[11] = state[11] ^ state[5] ^ tx;
+  state[7] ^= state[1] ^ tx;
+  state[9] ^= state[3] ^ tx;
+  state[11] ^= state[5] ^ tx;
 
-  state[6] = state[6] ^ state[0] ^ ty;
-  state[8] = state[8] ^ state[2] ^ ty;
-  state[10] = state[10] ^ state[4] ^ ty;
+  state[6] ^= state[0] ^ ty;
+  state[8] ^= state[2] ^ ty;
+  state[10] ^= state[4] ^ ty;
 
   // branch permutation
 
-  uint32_t t0 = state[6];
-  uint32_t t1 = state[8];
-  uint32_t t2 = state[10];
+  const auto t0 = state[6];
+  const auto t1 = state[8];
+  const auto t2 = state[10];
 
   state[6] = state[0];
   state[8] = state[2];
@@ -115,16 +115,16 @@ static inline void diffusion_layer_6(uint32_t* const state) {
   state[2] = t2;
   state[4] = t0;
 
-  t0 = state[7];
-  t1 = state[9];
-  t2 = state[11];
+  const auto t3 = state[7];
+  const auto t4 = state[9];
+  const auto t5 = state[11];
 
   state[7] = state[1];
   state[9] = state[3];
   state[11] = state[5];
-  state[1] = t1;
-  state[3] = t2;
-  state[5] = t0;
+  state[1] = t4;
+  state[3] = t5;
+  state[5] = t3;
 }
 
 // Diffusion Layer `ℒ8`, used when branch count = 8 i.e. permutation state
@@ -141,22 +141,22 @@ static inline void diffusion_layer_8(uint32_t* const state) {
   tx = std::rotl(tx ^ (tx << 16), 16);
   ty = std::rotl(ty ^ (ty << 16), 16);
 
-  state[9] = state[9] ^ state[1] ^ tx;
-  state[11] = state[11] ^ state[3] ^ tx;
-  state[13] = state[13] ^ state[5] ^ tx;
-  state[15] = state[15] ^ state[7] ^ tx;
+  state[9] ^= state[1] ^ tx;
+  state[11] ^= state[3] ^ tx;
+  state[13] ^= state[5] ^ tx;
+  state[15] ^= state[7] ^ tx;
 
-  state[8] = state[8] ^ state[0] ^ ty;
-  state[10] = state[10] ^ state[2] ^ ty;
-  state[12] = state[12] ^ state[4] ^ ty;
-  state[14] = state[14] ^ state[6] ^ ty;
+  state[8] ^= state[0] ^ ty;
+  state[10] ^= state[2] ^ ty;
+  state[12] ^= state[4] ^ ty;
+  state[14] ^= state[6] ^ ty;
 
   // branch permutation
 
-  uint32_t t0 = state[8];
-  uint32_t t1 = state[10];
-  uint32_t t2 = state[12];
-  uint32_t t3 = state[14];
+  const auto t0 = state[8];
+  const auto t1 = state[10];
+  const auto t2 = state[12];
+  const auto t3 = state[14];
 
   state[8] = state[0];
   state[10] = state[2];
@@ -167,19 +167,19 @@ static inline void diffusion_layer_8(uint32_t* const state) {
   state[4] = t3;
   state[6] = t0;
 
-  t0 = state[9];
-  t1 = state[11];
-  t2 = state[13];
-  t3 = state[15];
+  const auto t4 = state[9];
+  const auto t5 = state[11];
+  const auto t6 = state[13];
+  const auto t7 = state[15];
 
   state[9] = state[1];
   state[11] = state[3];
   state[13] = state[5];
   state[15] = state[7];
-  state[1] = t1;
-  state[3] = t2;
-  state[5] = t3;
-  state[7] = t0;
+  state[1] = t5;
+  state[3] = t6;
+  state[5] = t7;
+  state[7] = t4;
 }
 
 // Generic Sparkle Permutation Implementation, parameterized with # -of branches
