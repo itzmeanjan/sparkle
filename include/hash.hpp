@@ -39,6 +39,8 @@ static inline void feistel(uint32_t* const __restrict state,
   // Note, in Esch256 sparkle permutation variant Sparkle384 is used
   // which has state bit width of 384
   if constexpr (state_w == 384ul) {
+    static_assert(state_w == 384, "State bit width must be = 384 -bits");
+
     uint32_t tx = msg[0] ^ msg[2];
     uint32_t ty = msg[1] ^ msg[3];
 
@@ -57,7 +59,9 @@ static inline void feistel(uint32_t* const __restrict state,
   //
   // Note, in Esch384 sparkle permutation variant Sparkle512 is used
   // which has state bit width of 512
-  else if constexpr (state_w == 512ul) {
+  else {
+    static_assert(state_w == 512, "State bit width must be = 512 -bits");
+
     uint32_t tx = msg[0] ^ msg[2];
     uint32_t ty = msg[1] ^ msg[3];
 
