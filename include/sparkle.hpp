@@ -198,14 +198,24 @@ static inline void sparkle(uint32_t* const state) {
     state[3] = state[3] ^ static_cast<uint32_t>(i);
 
     if constexpr (nb == 4ul) {
+      static_assert(nb == 4ul, "# -of branches must be = 4");
+
 #if defined __clang__
-#pragma unroll 4
+      // Following
+      // https://clang.llvm.org/docs/LanguageExtensions.html#extensions-for-loop-hint-optimizations
+
+#pragma clang loop unroll(enable)
+#pragma clang loop vectorize(enable)
 #elif defined __GNUG__
+      // Following
+      // https://gcc.gnu.org/onlinedocs/gcc/Loop-Specific-Pragmas.html#Loop-Specific-Pragmas
+
+#pragma GCC ivdep
 #pragma GCC unroll 4
 #endif
-      for (size_t i = 0; i < 4; i++) {
-        const size_t x_idx = i << 1;
-        const size_t y_idx = x_idx ^ 1ul;
+      for (size_t i = 0; i < nb; i++) {
+        const size_t x_idx = i * 2;
+        const size_t y_idx = x_idx + 1ul;
 
         const auto p = alzette(state[x_idx], state[y_idx], CONST[i]);
 
@@ -215,14 +225,24 @@ static inline void sparkle(uint32_t* const state) {
 
       diffusion_layer_4(state);
     } else if constexpr (nb == 6ul) {
+      static_assert(nb == 6ul, "# -of branches must be = 6");
+
 #if defined __clang__
-#pragma unroll 4
+      // Following
+      // https://clang.llvm.org/docs/LanguageExtensions.html#extensions-for-loop-hint-optimizations
+
+#pragma clang loop unroll(enable)
+#pragma clang loop vectorize(enable)
 #elif defined __GNUG__
-#pragma GCC unroll 4
+      // Following
+      // https://gcc.gnu.org/onlinedocs/gcc/Loop-Specific-Pragmas.html#Loop-Specific-Pragmas
+
+#pragma GCC ivdep
+#pragma GCC unroll 6
 #endif
-      for (size_t i = 0; i < 4; i++) {
-        const size_t x_idx = i << 1;
-        const size_t y_idx = x_idx ^ 1ul;
+      for (size_t i = 0; i < nb; i++) {
+        const size_t x_idx = i * 2;
+        const size_t y_idx = x_idx + 1ul;
 
         const auto p = alzette(state[x_idx], state[y_idx], CONST[i]);
 
@@ -230,31 +250,26 @@ static inline void sparkle(uint32_t* const state) {
         state[y_idx] = p.second;
       }
 
-#if defined __clang__
-#pragma unroll 2
-#elif defined __GNUG__
-#pragma GCC unroll 2
-#endif
-      for (size_t i = 0; i < 2; i++) {
-        const size_t x_idx = 8ul ^ (i << 1);
-        const size_t y_idx = x_idx ^ 1ul;
-
-        const auto p = alzette(state[x_idx], state[y_idx], CONST[4ul ^ i]);
-
-        state[x_idx] = p.first;
-        state[y_idx] = p.second;
-      }
-
       diffusion_layer_6(state);
     } else if constexpr (nb == 8ul) {
+      static_assert(nb == 8ul, "# -of branches must be = 8");
+
 #if defined __clang__
-#pragma unroll 4
+      // Following
+      // https://clang.llvm.org/docs/LanguageExtensions.html#extensions-for-loop-hint-optimizations
+
+#pragma clang loop unroll(enable)
+#pragma clang loop vectorize(enable)
 #elif defined __GNUG__
-#pragma GCC unroll 4
+      // Following
+      // https://gcc.gnu.org/onlinedocs/gcc/Loop-Specific-Pragmas.html#Loop-Specific-Pragmas
+
+#pragma GCC ivdep
+#pragma GCC unroll 8
 #endif
-      for (size_t i = 0; i < 8; i++) {
-        const size_t x_idx = i << 1;
-        const size_t y_idx = x_idx ^ 1ul;
+      for (size_t i = 0; i < nb; i++) {
+        const size_t x_idx = i * 2;
+        const size_t y_idx = x_idx + 1ul;
 
         const auto p = alzette(state[x_idx], state[y_idx], CONST[i]);
 
