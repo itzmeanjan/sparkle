@@ -1016,6 +1016,9 @@ decrypt(const uint8_t* const __restrict key,   // C -bytes secret key
   for (size_t i = 0; i < C; i++) {
     flag |= (tag[i] ^ tag_[i]);
   }
+
+  // don't release unverified plain text
+  std::memset(dec, 0, flag * ct_len);
   return !flag;
 }
 
