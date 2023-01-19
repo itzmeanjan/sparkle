@@ -182,6 +182,16 @@ static inline void diffusion_layer_8(uint32_t* const state) {
   state[7] = t4;
 }
 
+// Compile-time check to ensure that # -of branches and # -of steps, for Sparkle
+// permutation, are conformant i.e. as provided in table 2.1 of the Sparkle
+// specification
+// https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
+consteval bool check_nb_ns(const size_t nb, const size_t ns) {
+  return ((nb == 4) && ((ns == 7) || (ns == 10))) ||
+         ((nb == 6) && ((ns == 7) || (ns == 11))) ||
+         ((nb == 8) && ((ns == 8) || (ns == 12)));
+}
+
 // Generic Sparkle Permutation Implementation, parameterized with # -of branches
 // ( i.e. in Sparkle256 it is 4, in Sparkle384 it is 6 & in Sparkle512 it is 8 )
 // and # -of steps ( i.e. whether slim/ big variant ), over state size of
@@ -195,7 +205,9 @@ static inline void diffusion_layer_8(uint32_t* const state) {
 template <const size_t nb, const size_t ns>
 static inline void sparkle(
     uint32_t* const state  // 32 * (nb * 2) -bit wide state
-) {
+    )
+  requires(check_nb_ns(nb, ns))
+{
   for (size_t i = 0; i < ns; i++) {
     state[1] = state[1] ^ CONST[i & 7ul];
     state[3] = state[3] ^ static_cast<uint32_t>(i);
