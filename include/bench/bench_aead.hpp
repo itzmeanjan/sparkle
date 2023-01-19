@@ -1,13 +1,8 @@
 #pragma once
-#include <benchmark/benchmark.h>
-
-#include <cassert>
-
-#include "schwaemm128_128.hpp"
-#include "schwaemm192_192.hpp"
-#include "schwaemm256_128.hpp"
-#include "schwaemm256_256.hpp"
+#include "schwaemm.hpp"
 #include "utils.hpp"
+#include <benchmark/benchmark.h>
+#include <cassert>
 
 // Benchmark Schwaemm256-128 Authenticated Encryption Scheme on CPU
 void

@@ -1,9 +1,7 @@
 #pragma once
-#include <benchmark/benchmark.h>
-
-#include "esch256.hpp"
-#include "esch384.hpp"
+#include "esch.hpp"
 #include "utils.hpp"
+#include <benchmark/benchmark.h>
 
 // Benchmarks Esch256 cryptographic hash function implementation for random
 // input of length N (>=0) -bytes | N is provided when setting up benchmark

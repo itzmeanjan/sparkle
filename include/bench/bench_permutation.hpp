@@ -1,8 +1,7 @@
 #pragma once
-#include <benchmark/benchmark.h>
-
 #include "sparkle.hpp"
 #include "utils.hpp"
+#include <benchmark/benchmark.h>
 
 // Benchmark Sparkle Cipher Suite on CPU
 namespace bench_sparkle {

@@ -1,7 +1,5 @@
+#include "esch.hpp"
 #include <iostream>
-
-#include "esch256.hpp"
-#include "esch384.hpp"
 
 // Compile it with
 //
