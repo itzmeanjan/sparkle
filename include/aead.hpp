@@ -159,19 +159,17 @@ feistel_swap(uint32_t* const s)
   }
 }
 
-// Feedback function `𝜌1`, used during SchwaemmX-Y Authenticated
+// Feedback function `𝜌2`, used during SchwaemmX-Y Authenticated
 // Encryption | X, Y ∈ {128, 192, 256}
 //
 // See section 2.3.2 of Sparkle Specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
 template<const size_t RATE>
 static inline void
-rho1(uint32_t* const __restrict s,      // RATE -bytes wide
+rho2(uint32_t* const __restrict s,      // RATE -bytes wide
      const uint32_t* const __restrict d // RATE -bytes wide
 )
 {
-  feistel_swap<RATE>(s);
-
   if constexpr (RATE == 16) {
     static_assert(RATE == 16, "Rate must be = 16 -bytes");
     constexpr size_t RATE_W = RATE >> 2;
@@ -235,27 +233,19 @@ rho1(uint32_t* const __restrict s,      // RATE -bytes wide
   }
 }
 
-// Feedback function `𝜌2`, used during SchwaemmX-Y Authenticated
+// Feedback function `𝜌1`, used during SchwaemmX-Y Authenticated
 // Encryption | X, Y ∈ {128, 192, 256}
 //
 // See section 2.3.2 of Sparkle Specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
 template<const size_t RATE>
 static inline void
-rho2(uint32_t* const __restrict s,      // RATE -bytes wide
+rho1(uint32_t* const __restrict s,      // RATE -bytes wide
      const uint32_t* const __restrict d // RATE -bytes wide
 )
 {
-  constexpr size_t RATE_W = RATE >> 2; // # -of 32 -bit words
-
-#if defined __clang__
-#pragma unroll
-#elif defined __GNUG__
-#pragma GCC ivdep
-#endif
-  for (size_t i = 0; i < RATE_W; i++) {
-    s[i] ^= d[i];
-  }
+  feistel_swap<RATE>(s);
+  rho2<RATE>(s, d);
 }
 
 // Inverse Feedback function `𝜌'1`, used during SchwaemmX-Y Verified
