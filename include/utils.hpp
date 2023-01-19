@@ -24,11 +24,14 @@ static inline const std::string to_hex(const uint8_t* const bytes,
   return ss.str();
 }
 
-// Generates N -many random bytes | N >= 0
-static inline void random_data(uint8_t* const data, const size_t len) {
+// Generates len (>=0) -many random elements of type T | T = unsigned integral
+template <typename T>
+static inline void random_data(T* const data, const size_t len)
+  requires(std::is_unsigned_v<T>)
+{
   std::random_device rd;
   std::mt19937_64 gen(rd());
-  std::uniform_int_distribution<uint8_t> dis;
+  std::uniform_int_distribution<T> dis;
 
   for (size_t i = 0; i < len; i++) {
     data[i] = dis(gen);
