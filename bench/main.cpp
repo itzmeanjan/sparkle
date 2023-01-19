@@ -1,5 +1,13 @@
 #include "bench/bench_sparkle.hpp"
 
+// registering Sparkle{256, 384, 512}'s slim/ big variant for benchmarking
+BENCHMARK(bench_sparkle::sparkle<4, 7>);
+BENCHMARK(bench_sparkle::sparkle<4, 10>);
+BENCHMARK(bench_sparkle::sparkle<6, 7>);
+BENCHMARK(bench_sparkle::sparkle<6, 11>);
+BENCHMARK(bench_sparkle::sparkle<8, 8>);
+BENCHMARK(bench_sparkle::sparkle<8, 12>);
+
 // registering Esch{256,384} functions for benchmark
 BENCHMARK(esch256_hash)->Arg(64);
 BENCHMARK(esch256_hash)->Arg(128);

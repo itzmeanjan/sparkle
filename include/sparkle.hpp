@@ -184,7 +184,8 @@ static inline void diffusion_layer_8(uint32_t* const state) {
 
 // Generic Sparkle Permutation Implementation, parameterized with # -of branches
 // ( i.e. in Sparkle256 it is 4, in Sparkle384 it is 6 & in Sparkle512 it is 8 )
-// and # -of steps ( i.e. whether slim/ big variant )
+// and # -of steps ( i.e. whether slim/ big variant ), over state size of
+// 32 * (2 * nb) -bits.
 //
 // See section 2.1 of Sparkle specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
@@ -192,7 +193,9 @@ static inline void diffusion_layer_8(uint32_t* const state) {
 // For implementation specific details, I suggest going through
 // algorithm 2.1, 2.2 & 2.3 of above linked document.
 template <const size_t nb, const size_t ns>
-static inline void sparkle(uint32_t* const state) {
+static inline void sparkle(
+    uint32_t* const state  // 32 * (nb * 2) -bit wide state
+) {
   for (size_t i = 0; i < ns; i++) {
     state[1] = state[1] ^ CONST[i & 7ul];
     state[3] = state[3] ^ static_cast<uint32_t>(i);
