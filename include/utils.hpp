@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <bit>
 #include <cstddef>
 #include <cstdint>
@@ -61,6 +62,37 @@ copy_le_bytes_to_words(const uint8_t* const __restrict bytes,
 #endif
     for (size_t i = 0; i < wlen; i++) {
       words[i] = bswap32(words[i]);
+    }
+  }
+}
+
+// This routine copies `blen` -many bytes from the source byte array to the
+// destination array of unsigned 32 -bit words, following little-endian
+// byte-order. `blen` can be any non-zero value, it doesn't necessarily need to
+// be divisible by 4.
+//
+// If you know how many bytes to copy and it's properly divisible by 4, consider
+// using above templated function.
+static inline void
+copy_le_bytes_to_words(const uint8_t* const __restrict bytes,
+                       uint32_t* const __restrict words,
+                       const size_t blen)
+{
+  if constexpr (is_little_endian()) {
+    std::memcpy(words, bytes, blen);
+  } else {
+    size_t off = 0;
+    size_t widx = 0;
+    while (off < blen) {
+      const size_t read = std::min<size_t>(blen - off, 4);
+
+      uint32_t word = 0;
+      std::memcpy(&word, bytes + off, read);
+      word = bswap32(word);
+      words[widx] = word;
+
+      off += read;
+      widx += 1;
     }
   }
 }
