@@ -79,32 +79,83 @@ initialize(
 // To be more specific, `s` is actually outer part of permutation state !
 template<const size_t RATE>
 static inline void
-feistel_swap(uint32_t* const __restrict s)
+feistel_swap(uint32_t* const s)
 {
   if constexpr ((RATE ^ 32ul) == 0) {
-    std::swap(s[0], s[4]);
-    std::swap(s[1], s[5]);
-    std::swap(s[2], s[6]);
-    std::swap(s[3], s[7]);
+    static_assert(RATE == 32, "Rate must be = 32 -bytes");
 
-    s[4] ^= s[0];
-    s[5] ^= s[1];
-    s[6] ^= s[2];
-    s[7] ^= s[3];
+#if defined __clang__
+    // Following
+    // https://clang.llvm.org/docs/LanguageExtensions.html#extensions-for-loop-hint-optimizations
+
+#pragma clang loop unroll(enable)
+#pragma clang loop vectorize(enable)
+#elif defined __GNUG__
+    // Following
+    // https://gcc.gnu.org/onlinedocs/gcc/Loop-Specific-Pragmas.html#Loop-Specific-Pragmas
+
+#pragma GCC ivdep
+#pragma GCC unroll 4
+#endif
+    for (size_t i = 0; i < 4; i++) {
+      // swap
+      s[i] ^= s[4 + i];
+      s[4 + i] ^= s[i];
+      s[i] ^= s[4 + i];
+
+      // xor
+      s[4 + i] ^= s[i];
+    }
   } else if constexpr ((RATE ^ 24ul) == 0) {
-    std::swap(s[0], s[3]);
-    std::swap(s[1], s[4]);
-    std::swap(s[2], s[5]);
+    static_assert(RATE == 24, "Rate must be = 24 -bytes");
 
-    s[3] ^= s[0];
-    s[4] ^= s[1];
-    s[5] ^= s[2];
-  } else if constexpr ((RATE ^ 16ul) == 0) {
-    std::swap(s[0], s[2]);
-    std::swap(s[1], s[3]);
+#if defined __clang__
+    // Following
+    // https://clang.llvm.org/docs/LanguageExtensions.html#extensions-for-loop-hint-optimizations
 
-    s[2] ^= s[0];
-    s[3] ^= s[1];
+#pragma clang loop unroll(enable)
+#pragma clang loop vectorize(enable)
+#elif defined __GNUG__
+    // Following
+    // https://gcc.gnu.org/onlinedocs/gcc/Loop-Specific-Pragmas.html#Loop-Specific-Pragmas
+
+#pragma GCC ivdep
+#pragma GCC unroll 3
+#endif
+    for (size_t i = 0; i < 3; i++) {
+      // swap
+      s[i] ^= s[3 + i];
+      s[3 + i] ^= s[i];
+      s[i] ^= s[3 + i];
+
+      // xor
+      s[3 + i] ^= s[i];
+    }
+  } else {
+    static_assert(RATE == 16, "Rate must be = 16 -bytes");
+
+#if defined __clang__
+    // Following
+    // https://clang.llvm.org/docs/LanguageExtensions.html#extensions-for-loop-hint-optimizations
+
+#pragma clang loop unroll(enable)
+#pragma clang loop vectorize(enable)
+#elif defined __GNUG__
+    // Following
+    // https://gcc.gnu.org/onlinedocs/gcc/Loop-Specific-Pragmas.html#Loop-Specific-Pragmas
+
+#pragma GCC ivdep
+#pragma GCC unroll 2
+#endif
+    for (size_t i = 0; i < 2; i++) {
+      // swap
+      s[i] ^= s[2 + i];
+      s[2 + i] ^= s[i];
+      s[i] ^= s[2 + i];
+
+      // xor
+      s[2 + i] ^= s[i];
+    }
   }
 }
 
