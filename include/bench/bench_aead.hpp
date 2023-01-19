@@ -25,13 +25,13 @@ schwaemm256_128_encrypt(benchmark::State& state)
   uint8_t* tag = static_cast<uint8_t*>(malloc(schwaemm256_128::C));
 
   // random plain text bytes
-  random_data(text, ct_len);
+  sparkle_utils::random_data(text, ct_len);
   // random associated data bytes
-  random_data(data, dt_len);
+  sparkle_utils::random_data(data, dt_len);
   // random secret key ( = 128 -bit )
-  random_data(key, schwaemm256_128::C);
+  sparkle_utils::random_data(key, schwaemm256_128::C);
   // random public message nonce ( = 256 -bit )
-  random_data(nonce, schwaemm256_128::R);
+  sparkle_utils::random_data(nonce, schwaemm256_128::R);
 
   memset(enc, 0, ct_len);
   memset(tag, 0, schwaemm256_128::C);
@@ -80,13 +80,13 @@ schwaemm256_128_decrypt(benchmark::State& state)
   uint8_t* tag = static_cast<uint8_t*>(malloc(schwaemm256_128::C));
 
   // random plain text bytes
-  random_data(text, ct_len);
+  sparkle_utils::random_data(text, ct_len);
   // random associated data bytes
-  random_data(data, dt_len);
+  sparkle_utils::random_data(data, dt_len);
   // random secret key ( = 128 -bit )
-  random_data(key, schwaemm256_128::C);
+  sparkle_utils::random_data(key, schwaemm256_128::C);
   // random public message nonce ( = 256 -bit )
-  random_data(nonce, schwaemm256_128::R);
+  sparkle_utils::random_data(nonce, schwaemm256_128::R);
 
   memset(enc, 0, ct_len);
   memset(dec, 0, ct_len);
@@ -145,13 +145,13 @@ schwaemm192_192_encrypt(benchmark::State& state)
   uint8_t* tag = static_cast<uint8_t*>(malloc(KNT_LEN));
 
   // random plain text bytes
-  random_data(text, ct_len);
+  sparkle_utils::random_data(text, ct_len);
   // random associated data bytes
-  random_data(data, dt_len);
+  sparkle_utils::random_data(data, dt_len);
   // random secret key ( = 192 -bit )
-  random_data(key, KNT_LEN);
+  sparkle_utils::random_data(key, KNT_LEN);
   // random public message nonce ( = 192 -bit )
-  random_data(nonce, KNT_LEN);
+  sparkle_utils::random_data(nonce, KNT_LEN);
 
   memset(enc, 0, ct_len);
   memset(tag, 0, KNT_LEN);
@@ -202,13 +202,13 @@ schwaemm192_192_decrypt(benchmark::State& state)
   uint8_t* tag = static_cast<uint8_t*>(malloc(KNT_LEN));
 
   // random plain text bytes
-  random_data(text, ct_len);
+  sparkle_utils::random_data(text, ct_len);
   // random associated data bytes
-  random_data(data, dt_len);
+  sparkle_utils::random_data(data, dt_len);
   // random secret key ( = 192 -bit )
-  random_data(key, KNT_LEN);
+  sparkle_utils::random_data(key, KNT_LEN);
   // random public message nonce ( = 192 -bit )
-  random_data(nonce, KNT_LEN);
+  sparkle_utils::random_data(nonce, KNT_LEN);
 
   memset(enc, 0, ct_len);
   memset(dec, 0, ct_len);
@@ -267,13 +267,13 @@ schwaemm128_128_encrypt(benchmark::State& state)
   uint8_t* tag = static_cast<uint8_t*>(malloc(KNT_LEN));
 
   // random plain text bytes
-  random_data(text, ct_len);
+  sparkle_utils::random_data(text, ct_len);
   // random associated data bytes
-  random_data(data, dt_len);
+  sparkle_utils::random_data(data, dt_len);
   // random secret key ( = 128 -bit )
-  random_data(key, KNT_LEN);
+  sparkle_utils::random_data(key, KNT_LEN);
   // random public message nonce ( = 128 -bit )
-  random_data(nonce, KNT_LEN);
+  sparkle_utils::random_data(nonce, KNT_LEN);
 
   memset(enc, 0, ct_len);
   memset(tag, 0, KNT_LEN);
@@ -324,13 +324,13 @@ schwaemm128_128_decrypt(benchmark::State& state)
   uint8_t* tag = static_cast<uint8_t*>(malloc(KNT_LEN));
 
   // random plain text bytes
-  random_data(text, ct_len);
+  sparkle_utils::random_data(text, ct_len);
   // random associated data bytes
-  random_data(data, dt_len);
+  sparkle_utils::random_data(data, dt_len);
   // random secret key ( = 128 -bit )
-  random_data(key, KNT_LEN);
+  sparkle_utils::random_data(key, KNT_LEN);
   // random public message nonce ( = 128 -bit )
-  random_data(nonce, KNT_LEN);
+  sparkle_utils::random_data(nonce, KNT_LEN);
 
   memset(enc, 0, ct_len);
   memset(dec, 0, ct_len);
@@ -389,13 +389,13 @@ schwaemm256_256_encrypt(benchmark::State& state)
   uint8_t* tag = static_cast<uint8_t*>(malloc(KNT_LEN));
 
   // random plain text bytes
-  random_data(text, ct_len);
+  sparkle_utils::random_data(text, ct_len);
   // random associated data bytes
-  random_data(data, dt_len);
+  sparkle_utils::random_data(data, dt_len);
   // random secret key ( = 256 -bit )
-  random_data(key, KNT_LEN);
+  sparkle_utils::random_data(key, KNT_LEN);
   // random public message nonce ( = 256 -bit )
-  random_data(nonce, KNT_LEN);
+  sparkle_utils::random_data(nonce, KNT_LEN);
 
   memset(enc, 0, ct_len);
   memset(tag, 0, KNT_LEN);
@@ -446,13 +446,13 @@ schwaemm256_256_decrypt(benchmark::State& state)
   uint8_t* tag = static_cast<uint8_t*>(malloc(KNT_LEN));
 
   // random plain text bytes
-  random_data(text, ct_len);
+  sparkle_utils::random_data(text, ct_len);
   // random associated data bytes
-  random_data(data, dt_len);
+  sparkle_utils::random_data(data, dt_len);
   // random secret key ( = 256 -bit )
-  random_data(key, KNT_LEN);
+  sparkle_utils::random_data(key, KNT_LEN);
   // random public message nonce ( = 256 -bit )
-  random_data(nonce, KNT_LEN);
+  sparkle_utils::random_data(nonce, KNT_LEN);
 
   memset(enc, 0, ct_len);
   memset(dec, 0, ct_len);

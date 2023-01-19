@@ -27,7 +27,7 @@ initialize(
   constexpr size_t RATE_W = RATE >> 2;         // # -of 32 -bit words
   constexpr size_t CAPACITY_W = CAPACITY >> 2; // # -of 32 -bit words
 
-  if constexpr (is_little_endian()) {
+  if constexpr (sparkle_utils::is_little_endian()) {
     std::memcpy(state, nonce, RATE);
   } else {
 #if defined __clang__
@@ -45,7 +45,7 @@ initialize(
     }
   }
 
-  if constexpr (is_little_endian()) {
+  if constexpr (sparkle_utils::is_little_endian()) {
     std::memcpy(state + RATE_W, key, CAPACITY);
   } else {
 #if defined __clang__
@@ -247,7 +247,7 @@ process_data(
   while (r_bytes > RATE) {
     const size_t b_off = d_len - r_bytes;
 
-    if constexpr (is_little_endian()) {
+    if constexpr (sparkle_utils::is_little_endian()) {
       std::memcpy(buffer0, data + b_off, RATE);
     } else {
 #if defined __clang__
@@ -300,7 +300,7 @@ process_data(
 
   std::memset(buffer0, 0, RATE);
 
-  if constexpr (is_little_endian()) {
+  if constexpr (sparkle_utils::is_little_endian()) {
     std::memcpy(buffer0, data + b_off, rb_full_words << 2);
   } else {
     for (size_t i = 0; i < rb_full_words; i++) {
@@ -381,7 +381,7 @@ process_text(uint32_t* const __restrict state,    // permutation state
   while (r_bytes > RATE) {
     const size_t b_off = ct_len - r_bytes;
 
-    if constexpr (is_little_endian()) {
+    if constexpr (sparkle_utils::is_little_endian()) {
       std::memcpy(buffer0, txt + b_off, RATE);
     } else {
 #if defined __clang__
@@ -402,7 +402,7 @@ process_text(uint32_t* const __restrict state,    // permutation state
     std::memcpy(buffer2, state, RATE);
     rho2<RATE>(buffer2, buffer0);
 
-    if constexpr (is_little_endian()) {
+    if constexpr (sparkle_utils::is_little_endian()) {
       std::memcpy(enc + b_off, buffer2, RATE);
     } else {
 #if defined __clang__
@@ -456,7 +456,7 @@ process_text(uint32_t* const __restrict state,    // permutation state
 
   std::memset(buffer0, 0, RATE);
 
-  if constexpr (is_little_endian()) {
+  if constexpr (sparkle_utils::is_little_endian()) {
     std::memcpy(buffer0, txt + b_off, rb_full_words << 2);
   } else {
     for (size_t i = 0; i < rb_full_words; i++) {
@@ -482,7 +482,7 @@ process_text(uint32_t* const __restrict state,    // permutation state
   std::memcpy(buffer2, state, RATE);
   rho2<RATE>(buffer2, buffer0);
 
-  if constexpr (is_little_endian()) {
+  if constexpr (sparkle_utils::is_little_endian()) {
     std::memcpy(enc + b_off, buffer2, rb_full_words << 2);
   } else {
     for (size_t i = 0; i < rb_full_words; i++) {
@@ -560,7 +560,7 @@ process_cipher(
   while (r_bytes > RATE) {
     const size_t b_off = ct_len - r_bytes;
 
-    if constexpr (is_little_endian()) {
+    if constexpr (sparkle_utils::is_little_endian()) {
       std::memcpy(buffer0, enc + b_off, RATE);
     } else {
 #if defined __clang__
@@ -581,7 +581,7 @@ process_cipher(
     std::memcpy(buffer2, state, RATE);
     rhoprime2<RATE>(buffer2, buffer0);
 
-    if constexpr (is_little_endian()) {
+    if constexpr (sparkle_utils::is_little_endian()) {
       std::memcpy(dec + b_off, buffer2, RATE);
     } else {
 #if defined __clang__
@@ -635,7 +635,7 @@ process_cipher(
 
   std::memset(buffer0, 0, RATE);
 
-  if constexpr (is_little_endian()) {
+  if constexpr (sparkle_utils::is_little_endian()) {
     std::memcpy(buffer0, enc + b_off, rb_full_words << 2);
   } else {
     for (size_t i = 0; i < rb_full_words; i++) {
@@ -661,7 +661,7 @@ process_cipher(
   std::memcpy(buffer2, state, RATE);
   rhoprime2<RATE>(buffer2, buffer0);
 
-  if constexpr (is_little_endian()) {
+  if constexpr (sparkle_utils::is_little_endian()) {
     std::memcpy(dec + b_off, buffer2, rb_full_words << 2);
   } else {
     for (size_t i = 0; i < rb_full_words; i++) {
@@ -743,7 +743,7 @@ finalize(const uint32_t* const __restrict state, // permutation state
 
   uint32_t buffer[CAPACITY_W];
 
-  if constexpr (is_little_endian()) {
+  if constexpr (sparkle_utils::is_little_endian()) {
     std::memcpy(buffer, key, CAPACITY);
   } else {
 #if defined __clang__
@@ -761,7 +761,7 @@ finalize(const uint32_t* const __restrict state, // permutation state
     }
   }
 
-  if constexpr (is_little_endian()) {
+  if constexpr (sparkle_utils::is_little_endian()) {
 #if defined __clang__
 #pragma unroll
 #elif defined __GNUG__

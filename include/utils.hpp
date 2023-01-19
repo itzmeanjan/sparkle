@@ -6,6 +6,9 @@
 #include <random>
 #include <sstream>
 
+// Utility routines used in Sparkle Cipher Suite
+namespace sparkle_utils {
+
 consteval static inline bool
 is_little_endian()
 {
@@ -40,4 +43,6 @@ random_data(T* const data, const size_t len)
   for (size_t i = 0; i < len; i++) {
     data[i] = dis(gen);
   }
+}
+
 }

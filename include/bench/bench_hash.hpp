@@ -16,7 +16,7 @@ esch256_hash(benchmark::State& state)
   uint8_t* msg = static_cast<uint8_t*>(std::malloc(mlen));
   uint8_t* out = static_cast<uint8_t*>(std::malloc(dlen));
 
-  random_data(msg, mlen);
+  sparkle_utils::random_data(msg, mlen);
   std::memset(out, 0, dlen);
 
   for (auto _ : state) {
@@ -45,7 +45,7 @@ esch384_hash(benchmark::State& state)
   uint8_t* msg = static_cast<uint8_t*>(std::malloc(mlen));
   uint8_t* out = static_cast<uint8_t*>(std::malloc(dlen));
 
-  random_data(msg, mlen);
+  sparkle_utils::random_data(msg, mlen);
   std::memset(out, 0, dlen);
 
   for (auto _ : state) {

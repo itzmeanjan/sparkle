@@ -13,7 +13,7 @@ void
 sparkle(benchmark::State& state)
 {
   uint32_t st[2 * nb];
-  random_data(st, 2 * nb);
+  sparkle_utils::random_data(st, 2 * nb);
 
   for (auto _ : state) {
     sparkle::sparkle<nb, ns>(st);

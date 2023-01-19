@@ -37,7 +37,7 @@ hash(const uint8_t* const __restrict in, // input message
   while (rm_bytes > hash::RATE) {
     const size_t b_off = ilen - rm_bytes;
 
-    if constexpr (is_little_endian()) {
+    if constexpr (sparkle_utils::is_little_endian()) {
       std::memcpy(buffer, in + b_off, hash::RATE);
     } else {
 #if defined __clang__
@@ -75,7 +75,7 @@ hash(const uint8_t* const __restrict in, // input message
 
   std::memset(buffer, 0, hash::RATE);
 
-  if constexpr (is_little_endian()) {
+  if constexpr (sparkle_utils::is_little_endian()) {
     std::memcpy(buffer, in + b_off, rb_full_words << 2);
   } else {
     for (size_t i = 0; i < rb_full_words; i++) {
@@ -104,7 +104,7 @@ hash(const uint8_t* const __restrict in, // input message
   hash::feistel<384ul>(state, buffer);
   sparkle::sparkle<6ul, 11ul>(state);
 
-  if constexpr (is_little_endian()) {
+  if constexpr (sparkle_utils::is_little_endian()) {
     std::memcpy(out, state, hash::RATE);
   } else {
 #if defined __clang__
@@ -133,7 +133,7 @@ hash(const uint8_t* const __restrict in, // input message
 
   sparkle::sparkle<6ul, 7ul>(state);
 
-  if constexpr (is_little_endian()) {
+  if constexpr (sparkle_utils::is_little_endian()) {
     std::memcpy(out + hash::RATE, state, hash::RATE);
   } else {
 #if defined __clang__
