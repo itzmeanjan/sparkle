@@ -69,7 +69,7 @@ static inline void hash(
   const size_t rb_full_words = rm_bytes >> 2;
   const size_t rb_rem_bytes = rm_bytes & 3ul;
 
-  std::memset(buffer, 0, 24);
+  std::memset(buffer, 0, hash::RATE);
 
   if constexpr (is_little_endian()) {
     std::memcpy(buffer, in + b_off, rb_full_words << 2);
@@ -91,10 +91,10 @@ static inline void hash(
     word |= static_cast<uint32_t>(in[b_off + off + i]) << (i << 3);
   }
 
-  const uint32_t words[2] = {0u, word};
+  const uint32_t words[]{0u, word};
   buffer[rb_full_words] = words[rb_full_words < 4];
 
-  constexpr uint32_t consts[2] = {hash::CONST_M1, hash::CONST_M0};
+  constexpr uint32_t consts[]{hash::CONST_M1, hash::CONST_M0};
   state[5] ^= consts[rm_bytes < hash::RATE];
 
   hash::feistel<384ul>(state, buffer);
