@@ -36,32 +36,7 @@ hash(const uint8_t* const __restrict in, // input message
   size_t r_bytes = ilen;
   while (r_bytes > hash::RATE) {
     const size_t b_off = ilen - r_bytes;
-
-    if constexpr (sparkle_utils::is_little_endian()) {
-      std::memcpy(buffer, in + b_off, hash::RATE);
-    } else {
-#if defined __clang__
-      // Following
-      // https://clang.llvm.org/docs/LanguageExtensions.html#extensions-for-loop-hint-optimizations
-
-#pragma clang loop unroll(enable)
-#pragma clang loop vectorize(enable)
-#elif defined __GNUG__
-      // Following
-      // https://gcc.gnu.org/onlinedocs/gcc/Loop-Specific-Pragmas.html#Loop-Specific-Pragmas
-
-#pragma GCC ivdep
-#pragma GCC unroll 4
-#endif
-      for (size_t j = 0; j < 4; j++) {
-        const size_t i_off = j << 2;
-
-        buffer[j] = (static_cast<uint32_t>(in[b_off + (i_off + 3)]) << 24) |
-                    (static_cast<uint32_t>(in[b_off + (i_off + 2)]) << 16) |
-                    (static_cast<uint32_t>(in[b_off + (i_off + 1)]) << 8) |
-                    (static_cast<uint32_t>(in[b_off + (i_off + 0)]) << 0);
-      }
-    }
+    sparkle_utils::copy_le_bytes_to_words<hash::RATE>(in + b_off, buffer);
 
     hash::feistel<512ul>(state, buffer);
     sparkle::sparkle<8ul, 8ul>(state);
@@ -71,29 +46,15 @@ hash(const uint8_t* const __restrict in, // input message
 
   const size_t b_off = ilen - r_bytes;
   const size_t rb_full_words = r_bytes >> 2;
+  const size_t rb_full_bytes = rb_full_words << 2;
   const size_t rb_rem_bytes = r_bytes & 3ul;
+  const size_t off = b_off + rb_full_bytes;
 
   std::memset(buffer, 0, hash::RATE);
-
-  if constexpr (sparkle_utils::is_little_endian()) {
-    std::memcpy(buffer, in + b_off, rb_full_words << 2);
-  } else {
-    for (size_t i = 0; i < rb_full_words; i++) {
-      const size_t off = i << 2;
-
-      buffer[i] = (static_cast<uint32_t>(in[b_off + (off + 3)]) << 24) |
-                  (static_cast<uint32_t>(in[b_off + (off + 2)]) << 16) |
-                  (static_cast<uint32_t>(in[b_off + (off + 1)]) << 8) |
-                  (static_cast<uint32_t>(in[b_off + (off + 0)]) << 0);
-    }
-  }
+  sparkle_utils::copy_le_bytes_to_words(in + b_off, buffer, rb_full_bytes);
 
   uint32_t word = 0x80u << (rb_rem_bytes << 3);
-  const size_t off = rb_full_words << 2;
-
-  for (size_t i = 0; i < rb_rem_bytes; i++) {
-    word |= static_cast<uint32_t>(in[b_off + off + i]) << (i << 3);
-  }
+  sparkle_utils::copy_le_bytes_to_words(in + off, &word, rb_rem_bytes);
 
   const uint32_t words[2] = { 0u, word };
   buffer[rb_full_words] = words[rb_full_words < 4];
@@ -104,90 +65,14 @@ hash(const uint8_t* const __restrict in, // input message
   hash::feistel<512ul>(state, buffer);
   sparkle::sparkle<8ul, 12ul>(state);
 
-  if constexpr (sparkle_utils::is_little_endian()) {
-    std::memcpy(out, state, hash::RATE);
-  } else {
-#if defined __clang__
-    // Following
-    // https://clang.llvm.org/docs/LanguageExtensions.html#extensions-for-loop-hint-optimizations
+  constexpr size_t off0 = hash::RATE;
+  constexpr size_t off1 = off0 + off0;
 
-#pragma clang loop unroll(enable)
-#pragma clang loop vectorize(enable)
-#elif defined __GNUG__
-    // Following
-    // https://gcc.gnu.org/onlinedocs/gcc/Loop-Specific-Pragmas.html#Loop-Specific-Pragmas
-
-#pragma GCC ivdep
-#pragma GCC unroll 4
-#endif
-    for (size_t i = 0; i < 4; i++) {
-      const uint32_t word = state[i];
-      const size_t b_off = i << 2;
-
-      out[b_off + 0] = static_cast<uint8_t>(word >> 0);
-      out[b_off + 1] = static_cast<uint8_t>(word >> 8);
-      out[b_off + 2] = static_cast<uint8_t>(word >> 16);
-      out[b_off + 3] = static_cast<uint8_t>(word >> 24);
-    }
-  }
-
+  sparkle_utils::copy_words_to_le_bytes<hash::RATE>(state, out);
   sparkle::sparkle<8ul, 8ul>(state);
-
-  if constexpr (sparkle_utils::is_little_endian()) {
-    std::memcpy(out + hash::RATE, state, hash::RATE);
-  } else {
-#if defined __clang__
-    // Following
-    // https://clang.llvm.org/docs/LanguageExtensions.html#extensions-for-loop-hint-optimizations
-
-#pragma clang loop unroll(enable)
-#pragma clang loop vectorize(enable)
-#elif defined __GNUG__
-    // Following
-    // https://gcc.gnu.org/onlinedocs/gcc/Loop-Specific-Pragmas.html#Loop-Specific-Pragmas
-
-#pragma GCC ivdep
-#pragma GCC unroll 4
-#endif
-    for (size_t i = 0; i < 4; i++) {
-      const uint32_t word = state[i];
-      const size_t b_off = i << 2;
-
-      out[16ul + (b_off + 0)] = static_cast<uint8_t>(word >> 0);
-      out[16ul + (b_off + 1)] = static_cast<uint8_t>(word >> 8);
-      out[16ul + (b_off + 2)] = static_cast<uint8_t>(word >> 16);
-      out[16ul + (b_off + 3)] = static_cast<uint8_t>(word >> 24);
-    }
-  }
-
+  sparkle_utils::copy_words_to_le_bytes<hash::RATE>(state, out + off0);
   sparkle::sparkle<8ul, 8ul>(state);
-
-  if constexpr (sparkle_utils::is_little_endian()) {
-    std::memcpy(out + (hash::RATE << 1), state, hash::RATE);
-  } else {
-#if defined __clang__
-    // Following
-    // https://clang.llvm.org/docs/LanguageExtensions.html#extensions-for-loop-hint-optimizations
-
-#pragma clang loop unroll(enable)
-#pragma clang loop vectorize(enable)
-#elif defined __GNUG__
-    // Following
-    // https://gcc.gnu.org/onlinedocs/gcc/Loop-Specific-Pragmas.html#Loop-Specific-Pragmas
-
-#pragma GCC ivdep
-#pragma GCC unroll 4
-#endif
-    for (size_t i = 0; i < 4; i++) {
-      const uint32_t word = state[i];
-      const size_t b_off = i << 2;
-
-      out[32ul + (b_off + 0)] = static_cast<uint8_t>(word >> 0);
-      out[32ul + (b_off + 1)] = static_cast<uint8_t>(word >> 8);
-      out[32ul + (b_off + 2)] = static_cast<uint8_t>(word >> 16);
-      out[32ul + (b_off + 3)] = static_cast<uint8_t>(word >> 24);
-    }
-  }
+  sparkle_utils::copy_words_to_le_bytes<hash::RATE>(state, out + off1);
 }
 
 } // namespace esch384
