@@ -8,8 +8,10 @@
 namespace bench_sparkle {
 
 // Benchmark slim/ big variant of Sparkle{256, 384, 512} permutation
-template <const size_t nb, const size_t ns>
-void sparkle(benchmark::State& state) {
+template<const size_t nb, const size_t ns>
+void
+sparkle(benchmark::State& state)
+{
   uint32_t st[2 * nb];
   random_data(st, 2 * nb);
 
@@ -22,4 +24,4 @@ void sparkle(benchmark::State& state) {
   state.SetBytesProcessed(total_bytes);
 }
 
-}  // namespace bench_sparkle
+} // namespace bench_sparkle

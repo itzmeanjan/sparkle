@@ -24,11 +24,12 @@ constexpr size_t DIGEST_LEN = 48;
 //
 // See algorithm 2.10 of Sparkle specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
-static inline void hash(
-    const uint8_t* const __restrict in,  // input message
-    const size_t ilen,                   // len(in) = N | N >= 0
-    uint8_t* const __restrict out        // 48 -bytes output digest
-) {
+static inline void
+hash(const uint8_t* const __restrict in, // input message
+     const size_t ilen,                  // len(in) = N | N >= 0
+     uint8_t* const __restrict out       // 48 -bytes output digest
+)
+{
   uint32_t state[16]{};
   uint32_t buffer[8]{};
 
@@ -94,10 +95,10 @@ static inline void hash(
     word |= static_cast<uint32_t>(in[b_off + off + i]) << (i << 3);
   }
 
-  const uint32_t words[2] = {0u, word};
+  const uint32_t words[2] = { 0u, word };
   buffer[rb_full_words] = words[rb_full_words < 4];
 
-  constexpr uint32_t consts[2] = {hash::CONST_M1, hash::CONST_M0};
+  constexpr uint32_t consts[2] = { hash::CONST_M1, hash::CONST_M0 };
   state[7] ^= consts[r_bytes < hash::RATE];
 
   hash::feistel<512ul>(state, buffer);
@@ -189,4 +190,4 @@ static inline void hash(
   }
 }
 
-}  // namespace esch384
+} // namespace esch384

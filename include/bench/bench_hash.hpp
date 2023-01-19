@@ -7,7 +7,9 @@
 
 // Benchmarks Esch256 cryptographic hash function implementation for random
 // input of length N (>=0) -bytes | N is provided when setting up benchmark
-void esch256_hash(benchmark::State& state) {
+void
+esch256_hash(benchmark::State& state)
+{
   const size_t mlen = static_cast<size_t>(state.range(0));
   const size_t dlen = esch256::DIGEST_LEN;
 
@@ -34,7 +36,9 @@ void esch256_hash(benchmark::State& state) {
 
 // Benchmarks Esch384 cryptographic hash function implementation for random
 // input of length N (>=0) -bytes | N is provided when setting up benchmark
-void esch384_hash(benchmark::State& state) {
+void
+esch384_hash(benchmark::State& state)
+{
   const size_t mlen = static_cast<size_t>(state.range(0));
   const size_t dlen = esch384::DIGEST_LEN;
 

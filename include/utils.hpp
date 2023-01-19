@@ -6,14 +6,17 @@
 #include <random>
 #include <sstream>
 
-consteval static inline bool is_little_endian() {
+consteval static inline bool
+is_little_endian()
+{
   return std::endian::native == std::endian::little;
 }
 
 // Given a bytearray of length N, this function converts it to human readable
 // hex string of length N << 1
-static inline const std::string to_hex(const uint8_t* const bytes,
-                                       const size_t len) {
+static inline const std::string
+to_hex(const uint8_t* const bytes, const size_t len)
+{
   std::stringstream ss;
   ss << std::hex;
 
@@ -25,8 +28,9 @@ static inline const std::string to_hex(const uint8_t* const bytes,
 }
 
 // Generates len (>=0) -many random elements of type T | T = unsigned integral
-template <typename T>
-static inline void random_data(T* const data, const size_t len)
+template<typename T>
+static inline void
+random_data(T* const data, const size_t len)
   requires(std::is_unsigned_v<T>)
 {
   std::random_device rd;

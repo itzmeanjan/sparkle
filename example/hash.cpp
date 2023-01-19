@@ -6,8 +6,10 @@
 // Compile it with
 //
 // g++ -std=c++20 -Wall -I ./include example/hash.cpp
-int main() {
-  constexpr size_t d_len = 32ul;  // message length in bytes
+int
+main()
+{
+  constexpr size_t d_len = 32ul; // message length in bytes
 
   uint8_t data[d_len];
   uint8_t dig0[32];
