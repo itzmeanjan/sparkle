@@ -44,17 +44,18 @@ hash(const uint8_t* const __restrict in, // input message
     r_bytes -= hash::RATE;
   }
 
-  const size_t b_off = ilen - r_bytes;
+  size_t b_off = ilen - r_bytes;
+
   const size_t rb_full_words = r_bytes >> 2;
   const size_t rb_full_bytes = rb_full_words << 2;
   const size_t rb_rem_bytes = r_bytes & 3ul;
-  const size_t off = b_off + rb_full_bytes;
 
   std::memset(buffer, 0, hash::RATE);
   sparkle_utils::copy_le_bytes_to_words(in + b_off, buffer, rb_full_bytes);
+  b_off += rb_full_bytes;
 
   uint32_t word = 0x80u << (rb_rem_bytes << 3);
-  sparkle_utils::copy_le_bytes_to_words(in + off, &word, rb_rem_bytes);
+  sparkle_utils::copy_le_bytes_to_words(in + b_off, &word, rb_rem_bytes);
 
   const uint32_t words[2] = { 0u, word };
   buffer[rb_full_words] = words[rb_full_words < 4];
