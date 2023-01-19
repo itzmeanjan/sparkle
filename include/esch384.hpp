@@ -7,6 +7,9 @@
 // Esch384 hash function, based on Sparkle permutation
 namespace esch384 {
 
+// Esch384 hash function produces 48 -bytes of digest
+constexpr size_t DIGEST_LEN = 48;
+
 // Esch384 --- lightweight, cryptographically secure hash function, based on
 // Sparkle permutation, producing 48 -bytes digest from N -bytes input | N >= 0
 //

@@ -1,5 +1,4 @@
-#include "bench_aead.hpp"
-#include "bench_hash.hpp"
+#include "bench/bench_sparkle.hpp"
 
 // registering Esch{256,384} functions for benchmark
 BENCHMARK(esch256_hash)->Arg(64);

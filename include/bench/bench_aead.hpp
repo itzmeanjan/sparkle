@@ -1,6 +1,8 @@
 #pragma once
 #include <benchmark/benchmark.h>
 
+#include <cassert>
+
 #include "schwaemm128_128.hpp"
 #include "schwaemm192_192.hpp"
 #include "schwaemm256_128.hpp"
@@ -8,7 +10,7 @@
 #include "utils.hpp"
 
 // Benchmark Schwaemm256-128 Authenticated Encryption Scheme on CPU
-static void schwaemm256_128_encrypt(benchmark::State& state) {
+void schwaemm256_128_encrypt(benchmark::State& state) {
   const size_t ct_len = state.range(0);
   const size_t dt_len = state.range(1);
 
@@ -35,7 +37,13 @@ static void schwaemm256_128_encrypt(benchmark::State& state) {
   for (auto _ : state) {
     schwaemm256_128::encrypt(key, nonce, data, dt_len, text, enc, ct_len, tag);
 
+    benchmark::DoNotOptimize(key);
+    benchmark::DoNotOptimize(nonce);
+    benchmark::DoNotOptimize(data);
+    benchmark::DoNotOptimize(dt_len);
+    benchmark::DoNotOptimize(text);
     benchmark::DoNotOptimize(enc);
+    benchmark::DoNotOptimize(ct_len);
     benchmark::DoNotOptimize(tag);
   }
 
@@ -54,7 +62,7 @@ static void schwaemm256_128_encrypt(benchmark::State& state) {
 }
 
 // Benchmark Schwaemm256-128 Verified Decryption Scheme on CPU
-static void schwaemm256_128_decrypt(benchmark::State& state) {
+void schwaemm256_128_decrypt(benchmark::State& state) {
   const size_t ct_len = state.range(0);
   const size_t dt_len = state.range(1);
 
@@ -86,8 +94,18 @@ static void schwaemm256_128_decrypt(benchmark::State& state) {
     using namespace schwaemm256_128;
     using namespace benchmark;
 
-    DoNotOptimize(decrypt(key, nonce, tag, data, dt_len, enc, dec, ct_len));
+    bool flg = decrypt(key, nonce, tag, data, dt_len, enc, dec, ct_len);
+
+    DoNotOptimize(flg);
+    assert(flg);
+    DoNotOptimize(key);
+    DoNotOptimize(nonce);
+    DoNotOptimize(tag);
+    DoNotOptimize(data);
+    DoNotOptimize(dt_len);
+    DoNotOptimize(enc);
     DoNotOptimize(dec);
+    DoNotOptimize(ct_len);
   }
 
   const size_t per_itr_data = dt_len + ct_len;
@@ -106,7 +124,7 @@ static void schwaemm256_128_decrypt(benchmark::State& state) {
 }
 
 // Benchmark Schwaemm192-192 Authenticated Encryption Scheme on CPU
-static void schwaemm192_192_encrypt(benchmark::State& state) {
+void schwaemm192_192_encrypt(benchmark::State& state) {
   const size_t ct_len = state.range(0);
   const size_t dt_len = state.range(1);
 
@@ -135,7 +153,13 @@ static void schwaemm192_192_encrypt(benchmark::State& state) {
   for (auto _ : state) {
     schwaemm192_192::encrypt(key, nonce, data, dt_len, text, enc, ct_len, tag);
 
+    benchmark::DoNotOptimize(key);
+    benchmark::DoNotOptimize(nonce);
+    benchmark::DoNotOptimize(data);
+    benchmark::DoNotOptimize(dt_len);
+    benchmark::DoNotOptimize(text);
     benchmark::DoNotOptimize(enc);
+    benchmark::DoNotOptimize(ct_len);
     benchmark::DoNotOptimize(tag);
   }
 
@@ -154,7 +178,7 @@ static void schwaemm192_192_encrypt(benchmark::State& state) {
 }
 
 // Benchmark Schwaemm192-192 Verified Decryption Scheme on CPU
-static void schwaemm192_192_decrypt(benchmark::State& state) {
+void schwaemm192_192_decrypt(benchmark::State& state) {
   const size_t ct_len = state.range(0);
   const size_t dt_len = state.range(1);
 
@@ -188,8 +212,18 @@ static void schwaemm192_192_decrypt(benchmark::State& state) {
     using namespace schwaemm192_192;
     using namespace benchmark;
 
-    DoNotOptimize(decrypt(key, nonce, tag, data, dt_len, enc, dec, ct_len));
+    bool flg = decrypt(key, nonce, tag, data, dt_len, enc, dec, ct_len);
+
+    DoNotOptimize(flg);
+    assert(flg);
+    DoNotOptimize(key);
+    DoNotOptimize(nonce);
+    DoNotOptimize(tag);
+    DoNotOptimize(data);
+    DoNotOptimize(dt_len);
+    DoNotOptimize(enc);
     DoNotOptimize(dec);
+    DoNotOptimize(ct_len);
   }
 
   const size_t per_itr_data = dt_len + ct_len;
@@ -208,7 +242,7 @@ static void schwaemm192_192_decrypt(benchmark::State& state) {
 }
 
 // Benchmark Schwaemm128-128 Authenticated Encryption Scheme on CPU
-static void schwaemm128_128_encrypt(benchmark::State& state) {
+void schwaemm128_128_encrypt(benchmark::State& state) {
   const size_t ct_len = state.range(0);
   const size_t dt_len = state.range(1);
 
@@ -237,7 +271,13 @@ static void schwaemm128_128_encrypt(benchmark::State& state) {
   for (auto _ : state) {
     schwaemm128_128::encrypt(key, nonce, data, dt_len, text, enc, ct_len, tag);
 
+    benchmark::DoNotOptimize(key);
+    benchmark::DoNotOptimize(nonce);
+    benchmark::DoNotOptimize(data);
+    benchmark::DoNotOptimize(dt_len);
+    benchmark::DoNotOptimize(text);
     benchmark::DoNotOptimize(enc);
+    benchmark::DoNotOptimize(ct_len);
     benchmark::DoNotOptimize(tag);
   }
 
@@ -256,7 +296,7 @@ static void schwaemm128_128_encrypt(benchmark::State& state) {
 }
 
 // Benchmark Schwaemm128-128 Verified Decryption Scheme on CPU
-static void schwaemm128_128_decrypt(benchmark::State& state) {
+void schwaemm128_128_decrypt(benchmark::State& state) {
   const size_t ct_len = state.range(0);
   const size_t dt_len = state.range(1);
 
@@ -290,8 +330,18 @@ static void schwaemm128_128_decrypt(benchmark::State& state) {
     using namespace schwaemm128_128;
     using namespace benchmark;
 
-    DoNotOptimize(decrypt(key, nonce, tag, data, dt_len, enc, dec, ct_len));
+    bool flg = decrypt(key, nonce, tag, data, dt_len, enc, dec, ct_len);
+
+    DoNotOptimize(flg);
+    assert(flg);
+    DoNotOptimize(key);
+    DoNotOptimize(nonce);
+    DoNotOptimize(tag);
+    DoNotOptimize(data);
+    DoNotOptimize(dt_len);
+    DoNotOptimize(enc);
     DoNotOptimize(dec);
+    DoNotOptimize(ct_len);
   }
 
   const size_t per_itr_data = dt_len + ct_len;
@@ -310,7 +360,7 @@ static void schwaemm128_128_decrypt(benchmark::State& state) {
 }
 
 // Benchmark Schwaemm256-256 Authenticated Encryption Scheme on CPU
-static void schwaemm256_256_encrypt(benchmark::State& state) {
+void schwaemm256_256_encrypt(benchmark::State& state) {
   const size_t ct_len = state.range(0);
   const size_t dt_len = state.range(1);
 
@@ -339,7 +389,13 @@ static void schwaemm256_256_encrypt(benchmark::State& state) {
   for (auto _ : state) {
     schwaemm256_256::encrypt(key, nonce, data, dt_len, text, enc, ct_len, tag);
 
+    benchmark::DoNotOptimize(key);
+    benchmark::DoNotOptimize(nonce);
+    benchmark::DoNotOptimize(data);
+    benchmark::DoNotOptimize(dt_len);
+    benchmark::DoNotOptimize(text);
     benchmark::DoNotOptimize(enc);
+    benchmark::DoNotOptimize(ct_len);
     benchmark::DoNotOptimize(tag);
   }
 
@@ -358,7 +414,7 @@ static void schwaemm256_256_encrypt(benchmark::State& state) {
 }
 
 // Benchmark Schwaemm256-256 Verified Decryption Scheme on CPU
-static void schwaemm256_256_decrypt(benchmark::State& state) {
+void schwaemm256_256_decrypt(benchmark::State& state) {
   const size_t ct_len = state.range(0);
   const size_t dt_len = state.range(1);
 
@@ -392,8 +448,18 @@ static void schwaemm256_256_decrypt(benchmark::State& state) {
     using namespace schwaemm256_256;
     using namespace benchmark;
 
-    DoNotOptimize(decrypt(key, nonce, tag, data, dt_len, enc, dec, ct_len));
+    bool flg = decrypt(key, nonce, tag, data, dt_len, enc, dec, ct_len);
+
+    DoNotOptimize(flg);
+    assert(flg);
+    DoNotOptimize(key);
+    DoNotOptimize(nonce);
+    DoNotOptimize(tag);
+    DoNotOptimize(data);
+    DoNotOptimize(dt_len);
+    DoNotOptimize(enc);
     DoNotOptimize(dec);
+    DoNotOptimize(ct_len);
   }
 
   const size_t per_itr_data = dt_len + ct_len;

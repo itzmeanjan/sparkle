@@ -7,6 +7,9 @@
 // Esch256 hash function, based on Sparkle permutation
 namespace esch256 {
 
+// Esch256 hash function produces 32 -bytes of digest
+constexpr size_t DIGEST_LEN = 32;
+
 // Esch256 --- lightweight, cryptographically secure hash function, based on
 // Sparkle permutation, producing 32 -bytes output from N -bytes input | N >= 0
 //
