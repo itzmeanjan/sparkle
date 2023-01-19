@@ -26,30 +26,36 @@ static inline void hash(
     const size_t ilen,                   // len(in) = N | N >= 0
     uint8_t* const __restrict out        // 48 -bytes output digest
 ) {
-  uint32_t state[16] = {0u};
-  uint32_t buffer[8] = {0u};
+  uint32_t state[16]{};
+  uint32_t buffer[8]{};
 
   size_t r_bytes = ilen;
   while (r_bytes > hash::RATE) {
     const size_t b_off = ilen - r_bytes;
 
-    std::memset(buffer + 4, 0, 16);
-
     if constexpr (is_little_endian()) {
       std::memcpy(buffer, in + b_off, hash::RATE);
     } else {
 #if defined __clang__
-#pragma unroll 4
+      // Following
+      // https://clang.llvm.org/docs/LanguageExtensions.html#extensions-for-loop-hint-optimizations
+
+#pragma clang loop unroll(enable)
+#pragma clang loop vectorize(enable)
 #elif defined __GNUG__
+      // Following
+      // https://gcc.gnu.org/onlinedocs/gcc/Loop-Specific-Pragmas.html#Loop-Specific-Pragmas
+
+#pragma GCC ivdep
 #pragma GCC unroll 4
 #endif
       for (size_t j = 0; j < 4; j++) {
         const size_t i_off = j << 2;
 
-        buffer[j] = (static_cast<uint32_t>(in[b_off + (i_off ^ 3)]) << 24) |
-                    (static_cast<uint32_t>(in[b_off + (i_off ^ 2)]) << 16) |
-                    (static_cast<uint32_t>(in[b_off + (i_off ^ 1)]) << 8) |
-                    (static_cast<uint32_t>(in[b_off + (i_off ^ 0)]) << 0);
+        buffer[j] = (static_cast<uint32_t>(in[b_off + (i_off + 3)]) << 24) |
+                    (static_cast<uint32_t>(in[b_off + (i_off + 2)]) << 16) |
+                    (static_cast<uint32_t>(in[b_off + (i_off + 1)]) << 8) |
+                    (static_cast<uint32_t>(in[b_off + (i_off + 0)]) << 0);
       }
     }
 
@@ -63,7 +69,7 @@ static inline void hash(
   const size_t rb_full_words = r_bytes >> 2;
   const size_t rb_rem_bytes = r_bytes & 3ul;
 
-  std::memset(buffer, 0, 32);
+  std::memset(buffer, 0, hash::RATE);
 
   if constexpr (is_little_endian()) {
     std::memcpy(buffer, in + b_off, rb_full_words << 2);
@@ -71,10 +77,10 @@ static inline void hash(
     for (size_t i = 0; i < rb_full_words; i++) {
       const size_t off = i << 2;
 
-      buffer[i] = (static_cast<uint32_t>(in[b_off + (off ^ 3)]) << 24) |
-                  (static_cast<uint32_t>(in[b_off + (off ^ 2)]) << 16) |
-                  (static_cast<uint32_t>(in[b_off + (off ^ 1)]) << 8) |
-                  (static_cast<uint32_t>(in[b_off + (off ^ 0)]) << 0);
+      buffer[i] = (static_cast<uint32_t>(in[b_off + (off + 3)]) << 24) |
+                  (static_cast<uint32_t>(in[b_off + (off + 2)]) << 16) |
+                  (static_cast<uint32_t>(in[b_off + (off + 1)]) << 8) |
+                  (static_cast<uint32_t>(in[b_off + (off + 0)]) << 0);
     }
   }
 
@@ -98,18 +104,26 @@ static inline void hash(
     std::memcpy(out, state, hash::RATE);
   } else {
 #if defined __clang__
-#pragma unroll 4
+    // Following
+    // https://clang.llvm.org/docs/LanguageExtensions.html#extensions-for-loop-hint-optimizations
+
+#pragma clang loop unroll(enable)
+#pragma clang loop vectorize(enable)
 #elif defined __GNUG__
+    // Following
+    // https://gcc.gnu.org/onlinedocs/gcc/Loop-Specific-Pragmas.html#Loop-Specific-Pragmas
+
+#pragma GCC ivdep
 #pragma GCC unroll 4
 #endif
     for (size_t i = 0; i < 4; i++) {
       const uint32_t word = state[i];
       const size_t b_off = i << 2;
 
-      out[b_off ^ 0] = static_cast<uint8_t>(word >> 0);
-      out[b_off ^ 1] = static_cast<uint8_t>(word >> 8);
-      out[b_off ^ 2] = static_cast<uint8_t>(word >> 16);
-      out[b_off ^ 3] = static_cast<uint8_t>(word >> 24);
+      out[b_off + 0] = static_cast<uint8_t>(word >> 0);
+      out[b_off + 1] = static_cast<uint8_t>(word >> 8);
+      out[b_off + 2] = static_cast<uint8_t>(word >> 16);
+      out[b_off + 3] = static_cast<uint8_t>(word >> 24);
     }
   }
 
@@ -119,18 +133,26 @@ static inline void hash(
     std::memcpy(out + hash::RATE, state, hash::RATE);
   } else {
 #if defined __clang__
-#pragma unroll 4
+    // Following
+    // https://clang.llvm.org/docs/LanguageExtensions.html#extensions-for-loop-hint-optimizations
+
+#pragma clang loop unroll(enable)
+#pragma clang loop vectorize(enable)
 #elif defined __GNUG__
+    // Following
+    // https://gcc.gnu.org/onlinedocs/gcc/Loop-Specific-Pragmas.html#Loop-Specific-Pragmas
+
+#pragma GCC ivdep
 #pragma GCC unroll 4
 #endif
     for (size_t i = 0; i < 4; i++) {
       const uint32_t word = state[i];
       const size_t b_off = i << 2;
 
-      out[16ul + (b_off ^ 0)] = static_cast<uint8_t>(word >> 0);
-      out[16ul + (b_off ^ 1)] = static_cast<uint8_t>(word >> 8);
-      out[16ul + (b_off ^ 2)] = static_cast<uint8_t>(word >> 16);
-      out[16ul + (b_off ^ 3)] = static_cast<uint8_t>(word >> 24);
+      out[16ul + (b_off + 0)] = static_cast<uint8_t>(word >> 0);
+      out[16ul + (b_off + 1)] = static_cast<uint8_t>(word >> 8);
+      out[16ul + (b_off + 2)] = static_cast<uint8_t>(word >> 16);
+      out[16ul + (b_off + 3)] = static_cast<uint8_t>(word >> 24);
     }
   }
 
@@ -140,18 +162,26 @@ static inline void hash(
     std::memcpy(out + (hash::RATE << 1), state, hash::RATE);
   } else {
 #if defined __clang__
-#pragma unroll 4
+    // Following
+    // https://clang.llvm.org/docs/LanguageExtensions.html#extensions-for-loop-hint-optimizations
+
+#pragma clang loop unroll(enable)
+#pragma clang loop vectorize(enable)
 #elif defined __GNUG__
+    // Following
+    // https://gcc.gnu.org/onlinedocs/gcc/Loop-Specific-Pragmas.html#Loop-Specific-Pragmas
+
+#pragma GCC ivdep
 #pragma GCC unroll 4
 #endif
     for (size_t i = 0; i < 4; i++) {
       const uint32_t word = state[i];
       const size_t b_off = i << 2;
 
-      out[32ul + (b_off ^ 0)] = static_cast<uint8_t>(word >> 0);
-      out[32ul + (b_off ^ 1)] = static_cast<uint8_t>(word >> 8);
-      out[32ul + (b_off ^ 2)] = static_cast<uint8_t>(word >> 16);
-      out[32ul + (b_off ^ 3)] = static_cast<uint8_t>(word >> 24);
+      out[32ul + (b_off + 0)] = static_cast<uint8_t>(word >> 0);
+      out[32ul + (b_off + 1)] = static_cast<uint8_t>(word >> 8);
+      out[32ul + (b_off + 2)] = static_cast<uint8_t>(word >> 16);
+      out[32ul + (b_off + 3)] = static_cast<uint8_t>(word >> 24);
     }
   }
 }
