@@ -259,20 +259,71 @@ rhoprime1(uint32_t* const __restrict s,      // RATE -bytes wide
           const uint32_t* const __restrict d // RATE -bytes wide
 )
 {
-  constexpr size_t RATE_W = RATE >> 2; // # -of 32 -bit words
-
-  uint32_t s_[RATE_W];
+  uint32_t s_[RATE / 4];
   std::memcpy(s_, s, RATE);
 
   feistel_swap<RATE>(s);
 
+  if constexpr (RATE == 16) {
+    static_assert(RATE == 16, "Rate must be = 16 -bytes");
+    constexpr size_t RATE_W = RATE >> 2;
+
 #if defined __clang__
-#pragma unroll
+    // Following
+    // https://clang.llvm.org/docs/LanguageExtensions.html#extensions-for-loop-hint-optimizations
+
+#pragma clang loop unroll(enable)
+#pragma clang loop vectorize(enable)
 #elif defined __GNUG__
+    // Following
+    // https://gcc.gnu.org/onlinedocs/gcc/Loop-Specific-Pragmas.html#Loop-Specific-Pragmas
+
 #pragma GCC ivdep
+#pragma GCC unroll 4
 #endif
-  for (size_t i = 0; i < RATE_W; i++) {
-    s[i] ^= s_[i] ^ d[i];
+    for (size_t i = 0; i < RATE_W; i++) {
+      s[i] ^= s_[i] ^ d[i];
+    }
+  } else if constexpr (RATE == 24) {
+    static_assert(RATE == 24, "Rate must be = 24 -bytes");
+    constexpr size_t RATE_W = RATE >> 2;
+
+#if defined __clang__
+    // Following
+    // https://clang.llvm.org/docs/LanguageExtensions.html#extensions-for-loop-hint-optimizations
+
+#pragma clang loop unroll(enable)
+#pragma clang loop vectorize(enable)
+#elif defined __GNUG__
+    // Following
+    // https://gcc.gnu.org/onlinedocs/gcc/Loop-Specific-Pragmas.html#Loop-Specific-Pragmas
+
+#pragma GCC ivdep
+#pragma GCC unroll 6
+#endif
+    for (size_t i = 0; i < RATE_W; i++) {
+      s[i] ^= s_[i] ^ d[i];
+    }
+  } else {
+    static_assert(RATE == 32, "Rate must be = 32 -bytes");
+    constexpr size_t RATE_W = RATE >> 2;
+
+#if defined __clang__
+    // Following
+    // https://clang.llvm.org/docs/LanguageExtensions.html#extensions-for-loop-hint-optimizations
+
+#pragma clang loop unroll(enable)
+#pragma clang loop vectorize(enable)
+#elif defined __GNUG__
+    // Following
+    // https://gcc.gnu.org/onlinedocs/gcc/Loop-Specific-Pragmas.html#Loop-Specific-Pragmas
+
+#pragma GCC ivdep
+#pragma GCC unroll 8
+#endif
+    for (size_t i = 0; i < RATE_W; i++) {
+      s[i] ^= s_[i] ^ d[i];
+    }
   }
 }
 
@@ -287,16 +338,7 @@ rhoprime2(uint32_t* const __restrict s,      // RATE -bytes wide
           const uint32_t* const __restrict d // RATE -bytes wide
 )
 {
-  constexpr size_t RATE_W = RATE >> 2; // # -of 32 -bit words
-
-#if defined __clang__
-#pragma unroll
-#elif defined __GNUG__
-#pragma GCC ivdep
-#endif
-  for (size_t i = 0; i < RATE_W; i++) {
-    s[i] ^= d[i];
-  }
+  rho2<RATE>(s, d);
 }
 
 // Rate whitening layer, applied to 128 -bit wide inner part of permutation
