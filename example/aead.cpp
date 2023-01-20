@@ -1,14 +1,10 @@
+#include "schwaemm.hpp"
 #include <cassert>
 #include <iostream>
 
-#include "schwaemm128_128.hpp"
-#include "schwaemm192_192.hpp"
-#include "schwaemm256_128.hpp"
-#include "schwaemm256_256.hpp"
-
 // Compile it with
 //
-// g++ -std=c++20 -Wall -I ./include example/aead.cpp
+// g++ -std=c++20 -Wall -O3 -I ./include example/aead.cpp
 int
 main()
 {
@@ -20,21 +16,22 @@ main()
   uint8_t enc[ct_len];
   uint8_t dec[ct_len];
 
-  random_data(data, d_len); // generate random associated data
-  random_data(txt, d_len);  // generate random plain text
+  sparkle_utils::random_data(data, d_len); // generate random associated data
+  sparkle_utils::random_data(txt, d_len);  // generate random plain text
 
-  std::cout << "data = " << to_hex(data, sizeof(data)) << std::endl;
-  std::cout << "text = " << to_hex(txt, sizeof(txt)) << std::endl;
+  std::cout << "data = " << sparkle_utils::to_hex(data, sizeof(data)) << "\n";
+  std::cout << "text = " << sparkle_utils::to_hex(txt, sizeof(txt)) << "\n";
 
   {
-    std::cout << "\nSchwaemm128-128 AEAD\n" << std::endl;
+    std::cout << "\nSchwaemm128-128 AEAD\n"
+              << "\n";
 
     uint8_t key[schwaemm128_128::C];
     uint8_t nonce[schwaemm128_128::R];
     uint8_t tag[schwaemm128_128::C];
 
-    random_data(key, sizeof(key));
-    random_data(nonce, sizeof(nonce));
+    sparkle_utils::random_data(key, sizeof(key));
+    sparkle_utils::random_data(nonce, sizeof(nonce));
 
     std::memset(enc, 0, sizeof(enc));
     std::memset(dec, 0, sizeof(dec));
@@ -55,22 +52,23 @@ main()
 
     assert(!cmp);
 
-    std::cout << "key           = " << to_hex(key, sizeof(key)) << std::endl;
-    std::cout << "nonce         = " << to_hex(nonce, sizeof(nonce))
-              << std::endl;
-    std::cout << "cipher        = " << to_hex(enc, sizeof(enc)) << std::endl;
-    std::cout << "decrypted     = " << to_hex(dec, sizeof(dec)) << std::endl;
+    using namespace sparkle_utils;
+    std::cout << "key           = " << to_hex(key, sizeof(key)) << "\n";
+    std::cout << "nonce         = " << to_hex(nonce, sizeof(nonce)) << "\n";
+    std::cout << "cipher        = " << to_hex(enc, sizeof(enc)) << "\n";
+    std::cout << "decrypted     = " << to_hex(dec, sizeof(dec)) << "\n";
   }
 
   {
-    std::cout << "\nSchwaemm192-192 AEAD\n" << std::endl;
+    std::cout << "\nSchwaemm192-192 AEAD\n"
+              << "\n";
 
     uint8_t key[schwaemm192_192::C];
     uint8_t nonce[schwaemm192_192::R];
     uint8_t tag[schwaemm192_192::C];
 
-    random_data(key, sizeof(key));
-    random_data(nonce, sizeof(nonce));
+    sparkle_utils::random_data(key, sizeof(key));
+    sparkle_utils::random_data(nonce, sizeof(nonce));
 
     std::memset(enc, 0, sizeof(enc));
     std::memset(dec, 0, sizeof(dec));
@@ -91,22 +89,23 @@ main()
 
     assert(!cmp);
 
-    std::cout << "key           = " << to_hex(key, sizeof(key)) << std::endl;
-    std::cout << "nonce         = " << to_hex(nonce, sizeof(nonce))
-              << std::endl;
-    std::cout << "cipher        = " << to_hex(enc, sizeof(enc)) << std::endl;
-    std::cout << "decrypted     = " << to_hex(dec, sizeof(dec)) << std::endl;
+    using namespace sparkle_utils;
+    std::cout << "key           = " << to_hex(key, sizeof(key)) << "\n";
+    std::cout << "nonce         = " << to_hex(nonce, sizeof(nonce)) << "\n";
+    std::cout << "cipher        = " << to_hex(enc, sizeof(enc)) << "\n";
+    std::cout << "decrypted     = " << to_hex(dec, sizeof(dec)) << "\n";
   }
 
   {
-    std::cout << "\nSchwaemm256-128 AEAD\n" << std::endl;
+    std::cout << "\nSchwaemm256-128 AEAD\n"
+              << "\n";
 
     uint8_t key[schwaemm256_128::C];
     uint8_t nonce[schwaemm256_128::R];
     uint8_t tag[schwaemm256_128::C];
 
-    random_data(key, sizeof(key));
-    random_data(nonce, sizeof(nonce));
+    sparkle_utils::random_data(key, sizeof(key));
+    sparkle_utils::random_data(nonce, sizeof(nonce));
 
     std::memset(enc, 0, sizeof(enc));
     std::memset(dec, 0, sizeof(dec));
@@ -127,22 +126,23 @@ main()
 
     assert(!cmp);
 
-    std::cout << "key           = " << to_hex(key, sizeof(key)) << std::endl;
-    std::cout << "nonce         = " << to_hex(nonce, sizeof(nonce))
-              << std::endl;
-    std::cout << "cipher        = " << to_hex(enc, sizeof(enc)) << std::endl;
-    std::cout << "decrypted     = " << to_hex(dec, sizeof(dec)) << std::endl;
+    using namespace sparkle_utils;
+    std::cout << "key           = " << to_hex(key, sizeof(key)) << "\n";
+    std::cout << "nonce         = " << to_hex(nonce, sizeof(nonce)) << "\n";
+    std::cout << "cipher        = " << to_hex(enc, sizeof(enc)) << "\n";
+    std::cout << "decrypted     = " << to_hex(dec, sizeof(dec)) << "\n";
   }
 
   {
-    std::cout << "\nSchwaemm256-256 AEAD\n" << std::endl;
+    std::cout << "\nSchwaemm256-256 AEAD\n"
+              << "\n";
 
     uint8_t key[schwaemm256_256::C];
     uint8_t nonce[schwaemm256_256::R];
     uint8_t tag[schwaemm256_256::C];
 
-    random_data(key, sizeof(key));
-    random_data(nonce, sizeof(nonce));
+    sparkle_utils::random_data(key, sizeof(key));
+    sparkle_utils::random_data(nonce, sizeof(nonce));
 
     std::memset(enc, 0, sizeof(enc));
     std::memset(dec, 0, sizeof(dec));
@@ -163,11 +163,11 @@ main()
 
     assert(!cmp);
 
-    std::cout << "key           = " << to_hex(key, sizeof(key)) << std::endl;
-    std::cout << "nonce         = " << to_hex(nonce, sizeof(nonce))
-              << std::endl;
-    std::cout << "cipher        = " << to_hex(enc, sizeof(enc)) << std::endl;
-    std::cout << "decrypted     = " << to_hex(dec, sizeof(dec)) << std::endl;
+    using namespace sparkle_utils;
+    std::cout << "key           = " << to_hex(key, sizeof(key)) << "\n";
+    std::cout << "nonce         = " << to_hex(nonce, sizeof(nonce)) << "\n";
+    std::cout << "cipher        = " << to_hex(enc, sizeof(enc)) << "\n";
+    std::cout << "decrypted     = " << to_hex(dec, sizeof(dec)) << "\n";
   }
 
   return EXIT_SUCCESS;

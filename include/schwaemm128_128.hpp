@@ -53,18 +53,19 @@ constexpr uint32_t M1 = (3u ^ (1u << 2)) << 24;
 //
 // See algorithm 2.17 of Sparkle Specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
-static inline void encrypt(
-    const uint8_t* const __restrict key,    // 16 -bytes secret key
-    const uint8_t* const __restrict nonce,  // 16 -bytes nonce
-    const uint8_t* const __restrict data,   // N (>=0) -bytes associated data
-    const size_t d_len,                     // len(data) = N | N >= 0
-    const uint8_t* const __restrict txt,    // N (>=0) -bytes plain text
-    uint8_t* const __restrict enc,          // N (>=0) -bytes cipher text
-    const size_t ct_len,                    // len(txt) = len(enc) = N | >= 0
-    uint8_t* const __restrict tag           // 16 -bytes authentication tag
-) {
-  aead::encrypt<R, C, A0, A1, M0, M1, BR, S, B>(key, nonce, data, d_len, txt,
-                                                enc, ct_len, tag);
+static inline void
+encrypt(const uint8_t* const __restrict key,   // 16 -bytes secret key
+        const uint8_t* const __restrict nonce, // 16 -bytes nonce
+        const uint8_t* const __restrict data,  // N (>=0) -bytes associated data
+        const size_t d_len,                    // len(data) = N | N >= 0
+        const uint8_t* const __restrict txt,   // N (>=0) -bytes plain text
+        uint8_t* const __restrict enc,         // N (>=0) -bytes cipher text
+        const size_t ct_len,                   // len(txt) = len(enc) = N | >= 0
+        uint8_t* const __restrict tag          // 16 -bytes authentication tag
+)
+{
+  aead::encrypt<R, C, A0, A1, M0, M1, BR, S, B>(
+    key, nonce, data, d_len, txt, enc, ct_len, tag);
 }
 
 // Schwaemm128-128 verified decryption, which computes N (>=0) -bytes of
@@ -83,18 +84,19 @@ static inline void encrypt(
 //
 // See algorithm 2.18 of Sparkle Specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
-static inline bool decrypt(
-    const uint8_t* const __restrict key,    // 16 -bytes secret key
-    const uint8_t* const __restrict nonce,  // 16 -bytes nonce
-    const uint8_t* const __restrict tag,    // 16 -bytes authentication tag
-    const uint8_t* const __restrict data,   // N (>=0) -bytes associated data
-    const size_t d_len,                     // len(data) = N | N >= 0
-    const uint8_t* const __restrict enc,    // N (>=0) -bytes encrypted text
-    uint8_t* const __restrict dec,          // N (>=0) -bytes decrypted text
-    const size_t ct_len                     // len(enc) = len(dec) = N | >= 0
-) {
-  return aead::decrypt<R, C, A0, A1, M0, M1, BR, S, B>(key, nonce, tag, data,
-                                                       d_len, enc, dec, ct_len);
+static inline bool
+decrypt(const uint8_t* const __restrict key,   // 16 -bytes secret key
+        const uint8_t* const __restrict nonce, // 16 -bytes nonce
+        const uint8_t* const __restrict tag,   // 16 -bytes authentication tag
+        const uint8_t* const __restrict data,  // N (>=0) -bytes associated data
+        const size_t d_len,                    // len(data) = N | N >= 0
+        const uint8_t* const __restrict enc,   // N (>=0) -bytes encrypted text
+        uint8_t* const __restrict dec,         // N (>=0) -bytes decrypted text
+        const size_t ct_len                    // len(enc) = len(dec) = N | >= 0
+)
+{
+  return aead::decrypt<R, C, A0, A1, M0, M1, BR, S, B>(
+    key, nonce, tag, data, d_len, enc, dec, ct_len);
 }
 
-}  // namespace schwaemm128_128
+} // namespace schwaemm128_128

@@ -1,22 +1,20 @@
+#include "esch.hpp"
 #include <iostream>
-
-#include "esch256.hpp"
-#include "esch384.hpp"
 
 // Compile it with
 //
-// g++ -std=c++20 -Wall -I ./include example/hash.cpp
+// g++ -std=c++20 -Wall -O3 -I ./include example/hash.cpp
 int
 main()
 {
   constexpr size_t d_len = 32ul; // message length in bytes
 
   uint8_t data[d_len];
-  uint8_t dig0[32];
-  uint8_t dig1[48];
+  uint8_t dig0[esch256::DIGEST_LEN];
+  uint8_t dig1[esch384::DIGEST_LEN];
 
   // random message bytes
-  random_data(data, d_len);
+  sparkle_utils::random_data(data, d_len);
 
   std::memset(dig0, 0, sizeof(dig0));
   std::memset(dig1, 0, sizeof(dig1));
@@ -26,6 +24,7 @@ main()
   // compute Esch384 digest
   esch384::hash(data, d_len, dig1);
 
+  using namespace sparkle_utils;
   std::cout << "esch256( " << to_hex(data, d_len)
             << " ) = " << to_hex(dig0, sizeof(dig0)) << std::endl;
 
