@@ -133,6 +133,35 @@ copy_words_to_le_bytes(const uint32_t* const __restrict words,
   }
 }
 
+// This routine copies `blen` -many bytes from the source u32 word array to the
+// destination byte array, following little-endian byte-order. `blen` can be any
+// non-zero value, it doesn't necessarily need to be divisible by 4.
+//
+// If you know how many bytes to copy and it's properly divisible by 4, consider
+// using above templated function.
+static inline void
+copy_words_to_le_bytes(const uint32_t* const __restrict words,
+                       uint8_t* const __restrict bytes,
+                       const size_t blen)
+{
+  if constexpr (is_little_endian()) {
+    std::memcpy(bytes, words, blen);
+  } else {
+    size_t boff = 0;
+    size_t woff = 0;
+    while (boff < blen) {
+      const size_t read = std::min<size_t>(blen - boff, 4);
+
+      uint32_t word = words[woff];
+      word = bswap32(word);
+      std::memcpy(bytes + boff, &word, read);
+
+      boff += read;
+      woff += 1;
+    }
+  }
+}
+
 // Given a bytearray of length N, this function converts it to human readable
 // hex string of length N << 1
 static inline const std::string
