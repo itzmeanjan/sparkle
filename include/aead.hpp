@@ -24,44 +24,10 @@ initialize(
   const uint8_t* const __restrict nonce // RATE -bytes nonce
 )
 {
-  constexpr size_t RATE_W = RATE >> 2;         // # -of 32 -bit words
-  constexpr size_t CAPACITY_W = CAPACITY >> 2; // # -of 32 -bit words
+  constexpr size_t RATE_W = RATE >> 2; // # -of 32 -bit words
 
-  if constexpr (sparkle_utils::is_little_endian()) {
-    std::memcpy(state, nonce, RATE);
-  } else {
-#if defined __clang__
-#pragma unroll
-#elif defined __GNUG__
-#pragma GCC ivdep
-#endif
-    for (size_t i = 0; i < RATE_W; i++) {
-      const size_t b_off = i << 2;
-
-      state[i] = (static_cast<uint32_t>(nonce[b_off ^ 3]) << 24) |
-                 (static_cast<uint32_t>(nonce[b_off ^ 2]) << 16) |
-                 (static_cast<uint32_t>(nonce[b_off ^ 1]) << 8) |
-                 (static_cast<uint32_t>(nonce[b_off ^ 0]) << 0);
-    }
-  }
-
-  if constexpr (sparkle_utils::is_little_endian()) {
-    std::memcpy(state + RATE_W, key, CAPACITY);
-  } else {
-#if defined __clang__
-#pragma unroll
-#elif defined __GNUG__
-#pragma GCC ivdep
-#endif
-    for (size_t i = 0; i < CAPACITY_W; i++) {
-      const size_t b_off = i << 2;
-
-      state[RATE_W + i] = (static_cast<uint32_t>(key[b_off ^ 3]) << 24) |
-                          (static_cast<uint32_t>(key[b_off ^ 2]) << 16) |
-                          (static_cast<uint32_t>(key[b_off ^ 1]) << 8) |
-                          (static_cast<uint32_t>(key[b_off ^ 0]) << 0);
-    }
-  }
+  sparkle_utils::copy_le_bytes_to_words<RATE>(nonce, state);
+  sparkle_utils::copy_le_bytes_to_words<CAPACITY>(key, state + RATE_W);
 
   sparkle::sparkle<nb, ns>(state);
 }
@@ -81,7 +47,7 @@ template<const size_t RATE>
 static inline void
 feistel_swap(uint32_t* const s)
 {
-  if constexpr ((RATE ^ 32ul) == 0) {
+  if constexpr (RATE == 32) {
     static_assert(RATE == 32, "Rate must be = 32 -bytes");
 
 #if defined __clang__
@@ -106,7 +72,7 @@ feistel_swap(uint32_t* const s)
       // xor
       s[4 + i] ^= s[i];
     }
-  } else if constexpr ((RATE ^ 24ul) == 0) {
+  } else if constexpr (RATE == 24) {
     static_assert(RATE == 24, "Rate must be = 24 -bytes");
 
 #if defined __clang__
@@ -355,6 +321,63 @@ omega(const uint32_t* const __restrict in, // 128 -bit
   std::memcpy(out + CAPACITY_W, in, CAPACITY);
 }
 
+// Rate whitening layer ( applied before each call to Sparkle permutation except
+// when it's being initialized ) which XORs the value of 𝒲𝑐,𝑟(𝑆_𝑅) to the outer
+// part s.t. 𝑆_𝑅 denotes the internal state corresponding to the inner part.
+//
+// Read more about it in section 2.3.2 ( bottom of page 14 ) of the Sparkle
+// specification
+// https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
+template<const size_t RATE, const size_t CAPACITY>
+static inline void
+whiten_rate(uint32_t* const state)
+{
+  constexpr size_t RATE_W = RATE >> 2; // # -of 32 -bit words
+
+  if constexpr ((RATE == 32) && (CAPACITY == 16)) {
+    static_assert((RATE == 32) && (CAPACITY == 16),
+                  "Rate must be = 32 and Capacity must be = 16");
+
+    uint32_t buffer[RATE_W];
+    omega<CAPACITY>(state + RATE_W, buffer);
+
+#if defined __clang__
+    // Following
+    // https://clang.llvm.org/docs/LanguageExtensions.html#extensions-for-loop-hint-optimizations
+
+#pragma clang loop unroll(enable)
+#pragma clang loop vectorize(enable)
+#elif defined __GNUG__
+    // Following
+    // https://gcc.gnu.org/onlinedocs/gcc/Loop-Specific-Pragmas.html#Loop-Specific-Pragmas
+
+#pragma GCC ivdep
+#endif
+    for (size_t i = 0; i < RATE_W; i++) {
+      state[i] ^= buffer[i];
+    }
+  } else {
+    static_assert(!((RATE == 32) && (CAPACITY == 16)),
+                  "Rate must be != 32 and Capacity must be != 16");
+
+#if defined __clang__
+    // Following
+    // https://clang.llvm.org/docs/LanguageExtensions.html#extensions-for-loop-hint-optimizations
+
+#pragma clang loop unroll(enable)
+#pragma clang loop vectorize(enable)
+#elif defined __GNUG__
+    // Following
+    // https://gcc.gnu.org/onlinedocs/gcc/Loop-Specific-Pragmas.html#Loop-Specific-Pragmas
+
+#pragma GCC ivdep
+#endif
+    for (size_t i = 0; i < RATE_W; i++) {
+      state[i] ^= state[RATE_W + i];
+    }
+  }
+}
+
 // Generic routine for consuming non-empty associated data into permutation
 // state using algorithm 2.13 of Sparkle specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/sparkle-spec-final.pdf
@@ -373,117 +396,42 @@ process_data(
 )
 {
   constexpr size_t RATE_W = RATE >> 2; // # -of 32 -bit words
-
-  uint32_t buffer0[RATE_W ^ 1];
-  uint32_t buffer1[RATE_W];
+  uint32_t buffer0[RATE_W + 1];
 
   size_t r_bytes = d_len;
   while (r_bytes > RATE) {
     const size_t b_off = d_len - r_bytes;
 
-    if constexpr (sparkle_utils::is_little_endian()) {
-      std::memcpy(buffer0, data + b_off, RATE);
-    } else {
-#if defined __clang__
-#pragma unroll
-#elif defined __GNUG__
-#pragma GCC ivdep
-#endif
-      for (size_t i = 0; i < RATE_W; i++) {
-        const size_t i_off = i << 2;
-
-        buffer0[i] = (static_cast<uint32_t>(data[b_off + (i_off ^ 3)]) << 24) |
-                     (static_cast<uint32_t>(data[b_off + (i_off ^ 2)]) << 16) |
-                     (static_cast<uint32_t>(data[b_off + (i_off ^ 1)]) << 8) |
-                     (static_cast<uint32_t>(data[b_off + (i_off ^ 0)]) << 0);
-      }
-    }
-
+    sparkle_utils::copy_le_bytes_to_words<RATE>(data + b_off, buffer0);
     rho1<RATE>(state, buffer0);
-
-    if constexpr (((RATE ^ 32ul) | (CAPACITY ^ 16ul)) == 0) {
-      omega<CAPACITY>(state + RATE_W, buffer1);
-
-#if defined __clang__
-#pragma unroll
-#elif defined __GNUG__
-#pragma GCC ivdep
-#endif
-      for (size_t i = 0; i < RATE_W; i++) {
-        state[i] ^= buffer1[i];
-      }
-    } else {
-#if defined __clang__
-#pragma unroll
-#elif defined __GNUG__
-#pragma GCC ivdep
-#endif
-      for (size_t i = 0; i < RATE_W; i++) {
-        state[i] ^= state[RATE_W + i];
-      }
-    }
-
+    whiten_rate<RATE, CAPACITY>(state);
     sparkle::sparkle<nb, ns_slim>(state);
 
     r_bytes -= RATE;
   }
 
-  const size_t b_off = d_len - r_bytes;
+  size_t b_off = d_len - r_bytes;
+
   const size_t rb_full_words = r_bytes >> 2;
+  const size_t rb_full_bytes = rb_full_words << 2;
   const size_t rb_rem_bytes = r_bytes & 3ul;
 
   std::memset(buffer0, 0, RATE);
-
-  if constexpr (sparkle_utils::is_little_endian()) {
-    std::memcpy(buffer0, data + b_off, rb_full_words << 2);
-  } else {
-    for (size_t i = 0; i < rb_full_words; i++) {
-      const size_t off = i << 2;
-
-      buffer0[i] = (static_cast<uint32_t>(data[b_off + (off ^ 3)]) << 24) |
-                   (static_cast<uint32_t>(data[b_off + (off ^ 2)]) << 16) |
-                   (static_cast<uint32_t>(data[b_off + (off ^ 1)]) << 8) |
-                   (static_cast<uint32_t>(data[b_off + (off ^ 0)]) << 0);
-    }
-  }
+  sparkle_utils::copy_le_bytes_to_words(data + b_off, buffer0, rb_full_bytes);
+  b_off += rb_full_bytes;
 
   uint32_t word = 0x80u << (rb_rem_bytes << 3);
-  const size_t off = rb_full_words << 2;
+  sparkle_utils::copy_le_bytes_to_words(data + b_off, &word, rb_rem_bytes);
 
-  for (size_t i = 0; i < rb_rem_bytes; i++) {
-    word |= static_cast<uint32_t>(data[b_off + off + i]) << (i << 3);
-  }
-
-  const uint32_t words[2] = { 0u, word };
+  const uint32_t words[]{ 0u, word };
   buffer0[rb_full_words] = words[rb_full_words < RATE_W];
 
   rho1<RATE>(state, buffer0);
 
-  constexpr uint32_t consts[2] = { CONST_A1, CONST_A0 };
+  constexpr uint32_t consts[]{ CONST_A1, CONST_A0 };
   state[(nb << 1) - 1] ^= consts[rb_full_words < RATE_W];
 
-  if constexpr (((RATE ^ 32ul) | (CAPACITY ^ 16ul)) == 0) {
-    omega<CAPACITY>(state + RATE_W, buffer1);
-
-#if defined __clang__
-#pragma unroll
-#elif defined __GNUG__
-#pragma GCC ivdep
-#endif
-    for (size_t i = 0; i < RATE_W; i++) {
-      state[i] ^= buffer1[i];
-    }
-  } else {
-#if defined __clang__
-#pragma unroll
-#elif defined __GNUG__
-#pragma GCC ivdep
-#endif
-    for (size_t i = 0; i < RATE_W; i++) {
-      state[i] ^= state[RATE_W + i];
-    }
-  }
-
+  whiten_rate<RATE, CAPACITY>(state);
   sparkle::sparkle<nb, ns_big>(state);
 }
 
@@ -509,159 +457,51 @@ process_text(uint32_t* const __restrict state,    // permutation state
 
   uint32_t buffer0[RATE_W + 1];
   uint32_t buffer1[RATE_W];
-  uint32_t buffer2[RATE_W];
 
   size_t r_bytes = ct_len;
   while (r_bytes > RATE) {
     const size_t b_off = ct_len - r_bytes;
 
-    if constexpr (sparkle_utils::is_little_endian()) {
-      std::memcpy(buffer0, txt + b_off, RATE);
-    } else {
-#if defined __clang__
-#pragma unroll
-#elif defined __GNUG__
-#pragma GCC ivdep
-#endif
-      for (size_t i = 0; i < RATE_W; i++) {
-        const size_t i_off = i << 2;
-
-        buffer0[i] = (static_cast<uint32_t>(txt[b_off + (i_off ^ 3)]) << 24) |
-                     (static_cast<uint32_t>(txt[b_off + (i_off ^ 2)]) << 16) |
-                     (static_cast<uint32_t>(txt[b_off + (i_off ^ 1)]) << 8) |
-                     (static_cast<uint32_t>(txt[b_off + (i_off ^ 0)]) << 0);
-      }
-    }
-
-    std::memcpy(buffer2, state, RATE);
-    rho2<RATE>(buffer2, buffer0);
-
-    if constexpr (sparkle_utils::is_little_endian()) {
-      std::memcpy(enc + b_off, buffer2, RATE);
-    } else {
-#if defined __clang__
-#pragma unroll
-#elif defined __GNUG__
-#pragma GCC ivdep
-#endif
-      for (size_t i = 0; i < RATE_W; i++) {
-        const size_t i_off = i << 2;
-
-        enc[b_off + (i_off ^ 0)] = static_cast<uint8_t>(buffer2[i] >> 0);
-        enc[b_off + (i_off ^ 1)] = static_cast<uint8_t>(buffer2[i] >> 8);
-        enc[b_off + (i_off ^ 2)] = static_cast<uint8_t>(buffer2[i] >> 16);
-        enc[b_off + (i_off ^ 3)] = static_cast<uint8_t>(buffer2[i] >> 24);
-      }
-    }
+    sparkle_utils::copy_le_bytes_to_words<RATE>(txt + b_off, buffer0);
+    std::memcpy(buffer1, state, RATE);
+    rho2<RATE>(buffer1, buffer0);
+    sparkle_utils::copy_words_to_le_bytes<RATE>(buffer1, enc + b_off);
 
     rho1<RATE>(state, buffer0);
-
-    if constexpr (((RATE ^ 32ul) | (CAPACITY ^ 16ul)) == 0) {
-      omega<CAPACITY>(state + RATE_W, buffer1);
-
-#if defined __clang__
-#pragma unroll
-#elif defined __GNUG__
-#pragma GCC ivdep
-#endif
-      for (size_t i = 0; i < RATE_W; i++) {
-        state[i] ^= buffer1[i];
-      }
-    } else {
-#if defined __clang__
-#pragma unroll
-#elif defined __GNUG__
-#pragma GCC ivdep
-#endif
-      for (size_t i = 0; i < RATE_W; i++) {
-        state[i] ^= state[RATE_W + i];
-      }
-    }
-
+    whiten_rate<RATE, CAPACITY>(state);
     sparkle::sparkle<nb, ns_slim>(state);
 
     r_bytes -= RATE;
   }
 
-  const size_t b_off = ct_len - r_bytes;
+  size_t b_off = ct_len - r_bytes;
+
   const size_t rb_full_words = r_bytes >> 2;
+  const size_t rb_full_bytes = rb_full_words << 2;
   const size_t rb_rem_bytes = r_bytes & 3ul;
-  const size_t w_off = rb_full_words << 2;
 
   std::memset(buffer0, 0, RATE);
-
-  if constexpr (sparkle_utils::is_little_endian()) {
-    std::memcpy(buffer0, txt + b_off, rb_full_words << 2);
-  } else {
-    for (size_t i = 0; i < rb_full_words; i++) {
-      const size_t i_off = i << 2;
-
-      buffer0[i] = (static_cast<uint32_t>(txt[b_off + (i_off ^ 3)]) << 24) |
-                   (static_cast<uint32_t>(txt[b_off + (i_off ^ 2)]) << 16) |
-                   (static_cast<uint32_t>(txt[b_off + (i_off ^ 1)]) << 8) |
-                   (static_cast<uint32_t>(txt[b_off + (i_off ^ 0)]) << 0);
-    }
-  }
+  sparkle_utils::copy_le_bytes_to_words(txt + b_off, buffer0, rb_full_bytes);
+  b_off += rb_full_bytes;
 
   uint32_t word = 0x80u << (rb_rem_bytes << 3);
-  for (size_t i = 0; i < rb_rem_bytes; i++) {
-    const size_t idx = b_off + w_off + i;
+  sparkle_utils::copy_le_bytes_to_words(txt + b_off, &word, rb_rem_bytes);
 
-    word |= static_cast<uint32_t>(txt[idx]) << (i << 3);
-  }
-
-  const uint32_t words[2] = { 0u, word };
+  const uint32_t words[]{ 0u, word };
   buffer0[rb_full_words] = words[rb_full_words < RATE_W];
 
-  std::memcpy(buffer2, state, RATE);
-  rho2<RATE>(buffer2, buffer0);
+  std::memcpy(buffer1, state, RATE);
+  rho2<RATE>(buffer1, buffer0);
 
-  if constexpr (sparkle_utils::is_little_endian()) {
-    std::memcpy(enc + b_off, buffer2, rb_full_words << 2);
-  } else {
-    for (size_t i = 0; i < rb_full_words; i++) {
-      const size_t i_off = i << 2;
-
-      enc[b_off + (i_off ^ 0)] = static_cast<uint8_t>(buffer2[i] >> 0);
-      enc[b_off + (i_off ^ 1)] = static_cast<uint8_t>(buffer2[i] >> 8);
-      enc[b_off + (i_off ^ 2)] = static_cast<uint8_t>(buffer2[i] >> 16);
-      enc[b_off + (i_off ^ 3)] = static_cast<uint8_t>(buffer2[i] >> 24);
-    }
-  }
-
-  for (size_t i = 0; i < rb_rem_bytes; i++) {
-    const size_t idx = b_off + w_off + i;
-
-    enc[idx] = static_cast<uint8_t>(buffer2[rb_full_words] >> (i << 3));
-  }
+  b_off -= rb_full_bytes;
+  sparkle_utils::copy_words_to_le_bytes(buffer1, enc + b_off, r_bytes);
 
   rho1<RATE>(state, buffer0);
 
-  constexpr uint32_t consts[2] = { CONST_M1, CONST_M0 };
+  constexpr uint32_t consts[]{ CONST_M1, CONST_M0 };
   state[(nb << 1) - 1] ^= consts[rb_full_words < RATE_W];
 
-  if constexpr (((RATE ^ 32ul) | (CAPACITY ^ 16ul)) == 0) {
-    omega<CAPACITY>(state + RATE_W, buffer1);
-
-#if defined __clang__
-#pragma unroll
-#elif defined __GNUG__
-#pragma GCC ivdep
-#endif
-    for (size_t i = 0; i < RATE_W; i++) {
-      state[i] ^= buffer1[i];
-    }
-  } else {
-#if defined __clang__
-#pragma unroll
-#elif defined __GNUG__
-#pragma GCC ivdep
-#endif
-    for (size_t i = 0; i < RATE_W; i++) {
-      state[i] ^= state[RATE_W + i];
-    }
-  }
-
+  whiten_rate<RATE, CAPACITY>(state);
   sparkle::sparkle<nb, ns_big>(state);
 }
 
@@ -688,175 +528,62 @@ process_cipher(
 
   uint32_t buffer0[RATE_W + 1];
   uint32_t buffer1[RATE_W];
-  uint32_t buffer2[RATE_W];
 
   size_t r_bytes = ct_len;
   while (r_bytes > RATE) {
     const size_t b_off = ct_len - r_bytes;
 
-    if constexpr (sparkle_utils::is_little_endian()) {
-      std::memcpy(buffer0, enc + b_off, RATE);
-    } else {
-#if defined __clang__
-#pragma unroll
-#elif defined __GNUG__
-#pragma GCC ivdep
-#endif
-      for (size_t i = 0; i < RATE_W; i++) {
-        const size_t i_off = i << 2;
-
-        buffer0[i] = (static_cast<uint32_t>(enc[b_off + (i_off ^ 3)]) << 24) |
-                     (static_cast<uint32_t>(enc[b_off + (i_off ^ 2)]) << 16) |
-                     (static_cast<uint32_t>(enc[b_off + (i_off ^ 1)]) << 8) |
-                     (static_cast<uint32_t>(enc[b_off + (i_off ^ 0)]) << 0);
-      }
-    }
-
-    std::memcpy(buffer2, state, RATE);
-    rhoprime2<RATE>(buffer2, buffer0);
-
-    if constexpr (sparkle_utils::is_little_endian()) {
-      std::memcpy(dec + b_off, buffer2, RATE);
-    } else {
-#if defined __clang__
-#pragma unroll
-#elif defined __GNUG__
-#pragma GCC ivdep
-#endif
-      for (size_t i = 0; i < RATE_W; i++) {
-        const size_t i_off = i << 2;
-
-        dec[b_off + (i_off ^ 0)] = static_cast<uint8_t>(buffer2[i] >> 0);
-        dec[b_off + (i_off ^ 1)] = static_cast<uint8_t>(buffer2[i] >> 8);
-        dec[b_off + (i_off ^ 2)] = static_cast<uint8_t>(buffer2[i] >> 16);
-        dec[b_off + (i_off ^ 3)] = static_cast<uint8_t>(buffer2[i] >> 24);
-      }
-    }
+    sparkle_utils::copy_le_bytes_to_words<RATE>(enc + b_off, buffer0);
+    std::memcpy(buffer1, state, RATE);
+    rhoprime2<RATE>(buffer1, buffer0);
+    sparkle_utils::copy_words_to_le_bytes<RATE>(buffer1, dec + b_off);
 
     rhoprime1<RATE>(state, buffer0);
-
-    if constexpr (((RATE ^ 32ul) | (CAPACITY ^ 16ul)) == 0) {
-      omega<CAPACITY>(state + RATE_W, buffer1);
-
-#if defined __clang__
-#pragma unroll
-#elif defined __GNUG__
-#pragma GCC ivdep
-#endif
-      for (size_t i = 0; i < RATE_W; i++) {
-        state[i] ^= buffer1[i];
-      }
-    } else {
-#if defined __clang__
-#pragma unroll
-#elif defined __GNUG__
-#pragma GCC ivdep
-#endif
-      for (size_t i = 0; i < RATE_W; i++) {
-        state[i] ^= state[RATE_W + i];
-      }
-    }
-
+    whiten_rate<RATE, CAPACITY>(state);
     sparkle::sparkle<nb, ns_slim>(state);
 
     r_bytes -= RATE;
   }
 
-  const size_t b_off = ct_len - r_bytes;
+  size_t b_off = ct_len - r_bytes;
+
   const size_t rb_full_words = r_bytes >> 2;
+  const size_t rb_full_bytes = rb_full_words << 2;
   const size_t rb_rem_bytes = r_bytes & 3ul;
-  const size_t w_off = rb_full_words << 2;
 
   std::memset(buffer0, 0, RATE);
-
-  if constexpr (sparkle_utils::is_little_endian()) {
-    std::memcpy(buffer0, enc + b_off, rb_full_words << 2);
-  } else {
-    for (size_t i = 0; i < rb_full_words; i++) {
-      const size_t i_off = i << 2;
-
-      buffer0[i] = (static_cast<uint32_t>(enc[b_off + (i_off ^ 3)]) << 24) |
-                   (static_cast<uint32_t>(enc[b_off + (i_off ^ 2)]) << 16) |
-                   (static_cast<uint32_t>(enc[b_off + (i_off ^ 1)]) << 8) |
-                   (static_cast<uint32_t>(enc[b_off + (i_off ^ 0)]) << 0);
-    }
-  }
+  sparkle_utils::copy_le_bytes_to_words(enc + b_off, buffer0, rb_full_bytes);
+  b_off += rb_full_bytes;
 
   uint32_t word = 0x80u << (rb_rem_bytes << 3);
-  for (size_t i = 0; i < rb_rem_bytes; i++) {
-    const size_t idx = b_off + w_off + i;
+  sparkle_utils::copy_le_bytes_to_words(enc + b_off, &word, rb_rem_bytes);
 
-    word |= static_cast<uint32_t>(enc[idx]) << (i << 3);
-  }
-
-  const uint32_t words[2] = { 0u, word };
+  const uint32_t words[]{ 0u, word };
   buffer0[rb_full_words] = words[rb_full_words < RATE_W];
 
-  std::memcpy(buffer2, state, RATE);
-  rhoprime2<RATE>(buffer2, buffer0);
+  std::memcpy(buffer1, state, RATE);
+  rhoprime2<RATE>(buffer1, buffer0);
 
-  if constexpr (sparkle_utils::is_little_endian()) {
-    std::memcpy(dec + b_off, buffer2, rb_full_words << 2);
-  } else {
-    for (size_t i = 0; i < rb_full_words; i++) {
-      const size_t i_off = i << 2;
-
-      dec[b_off + (i_off ^ 0)] = static_cast<uint8_t>(buffer2[i] >> 0);
-      dec[b_off + (i_off ^ 1)] = static_cast<uint8_t>(buffer2[i] >> 8);
-      dec[b_off + (i_off ^ 2)] = static_cast<uint8_t>(buffer2[i] >> 16);
-      dec[b_off + (i_off ^ 3)] = static_cast<uint8_t>(buffer2[i] >> 24);
-    }
-  }
-
-  for (size_t i = 0; i < rb_rem_bytes; i++) {
-    const size_t idx = b_off + w_off + i;
-
-    dec[idx] = static_cast<uint8_t>(buffer2[rb_full_words] >> (i << 3));
-  }
+  b_off -= rb_full_bytes;
+  sparkle_utils::copy_words_to_le_bytes(buffer1, dec + b_off, r_bytes);
+  b_off += rb_full_bytes;
 
   if (r_bytes < RATE) {
-    std::memset(buffer2 + rb_full_words, 0, RATE - w_off);
+    std::memset(buffer1 + rb_full_words, 0, RATE - rb_full_bytes);
 
     uint32_t word = 0x80u << (rb_rem_bytes << 3);
+    sparkle_utils::copy_le_bytes_to_words(dec + b_off, &word, rb_rem_bytes);
+    buffer1[rb_full_words] = word;
 
-    for (size_t i = 0; i < rb_rem_bytes; i++) {
-      const size_t idx = b_off + w_off + i;
-
-      word |= static_cast<uint32_t>(dec[idx]) << (i << 3);
-    }
-
-    buffer2[rb_full_words] = word;
-
-    rho1<RATE>(state, buffer2);
+    rho1<RATE>(state, buffer1);
   } else {
     rhoprime1<RATE>(state, buffer0);
   }
 
-  constexpr uint32_t consts[2] = { CONST_M1, CONST_M0 };
+  constexpr uint32_t consts[]{ CONST_M1, CONST_M0 };
   state[(nb << 1) - 1] ^= consts[rb_full_words < RATE_W];
 
-  if constexpr (((RATE ^ 32ul) | (CAPACITY ^ 16ul)) == 0) {
-    omega<CAPACITY>(state + RATE_W, buffer1);
-
-#if defined __clang__
-#pragma unroll
-#elif defined __GNUG__
-#pragma GCC ivdep
-#endif
-    for (size_t i = 0; i < RATE_W; i++) {
-      state[i] ^= buffer1[i];
-    }
-  } else {
-#if defined __clang__
-#pragma unroll
-#elif defined __GNUG__
-#pragma GCC ivdep
-#endif
-    for (size_t i = 0; i < RATE_W; i++) {
-      state[i] ^= state[RATE_W + i];
-    }
-  }
-
+  whiten_rate<RATE, CAPACITY>(state);
   sparkle::sparkle<nb, ns_big>(state);
 }
 
@@ -876,52 +603,25 @@ finalize(const uint32_t* const __restrict state, // permutation state
   constexpr size_t CAPACITY_W = CAPACITY >> 2; // # -of 32 -bit words
 
   uint32_t buffer[CAPACITY_W];
+  sparkle_utils::copy_le_bytes_to_words<CAPACITY>(key, buffer);
 
-  if constexpr (sparkle_utils::is_little_endian()) {
-    std::memcpy(buffer, key, CAPACITY);
-  } else {
 #if defined __clang__
-#pragma unroll
+  // Following
+  // https://clang.llvm.org/docs/LanguageExtensions.html#extensions-for-loop-hint-optimizations
+
+#pragma clang loop unroll(enable)
+#pragma clang loop vectorize(enable)
 #elif defined __GNUG__
+  // Following
+  // https://gcc.gnu.org/onlinedocs/gcc/Loop-Specific-Pragmas.html#Loop-Specific-Pragmas
+
 #pragma GCC ivdep
 #endif
-    for (size_t i = 0; i < CAPACITY_W; i++) {
-      const size_t b_off = i << 2;
-
-      buffer[i] = (static_cast<uint32_t>(key[b_off ^ 3]) << 24) |
-                  (static_cast<uint32_t>(key[b_off ^ 2]) << 16) |
-                  (static_cast<uint32_t>(key[b_off ^ 1]) << 8) |
-                  (static_cast<uint32_t>(key[b_off ^ 0]) << 0);
-    }
+  for (size_t i = 0; i < CAPACITY_W; i++) {
+    buffer[i] ^= state[RATE_W + i];
   }
 
-  if constexpr (sparkle_utils::is_little_endian()) {
-#if defined __clang__
-#pragma unroll
-#elif defined __GNUG__
-#pragma GCC ivdep
-#endif
-    for (size_t i = 0; i < CAPACITY_W; i++) {
-      buffer[i] ^= state[RATE_W + i];
-    }
-
-    std::memcpy(tag, buffer, CAPACITY);
-  } else {
-#if defined __clang__
-#pragma unroll
-#elif defined __GNUG__
-#pragma GCC ivdep
-#endif
-    for (size_t i = 0; i < CAPACITY_W; i++) {
-      const size_t b_off = i << 2;
-      const uint32_t t_word = state[RATE_W + i] ^ buffer[i];
-
-      tag[b_off ^ 0] = static_cast<uint8_t>(t_word >> 0);
-      tag[b_off ^ 1] = static_cast<uint8_t>(t_word >> 8);
-      tag[b_off ^ 2] = static_cast<uint8_t>(t_word >> 16);
-      tag[b_off ^ 3] = static_cast<uint8_t>(t_word >> 24);
-    }
-  }
+  sparkle_utils::copy_words_to_le_bytes<CAPACITY>(buffer, tag);
 }
 
 // Generic authenticated encryption routine which can be used with SchwaemmX-Y
