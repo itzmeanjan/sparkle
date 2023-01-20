@@ -398,6 +398,7 @@ process_data(
   constexpr size_t RATE_W = RATE >> 2; // # -of 32 -bit words
   uint32_t buffer0[RATE_W + 1];
 
+  // process full message blocks, except last one ( even if that's full )
   size_t r_bytes = d_len;
   while (r_bytes > RATE) {
     const size_t b_off = d_len - r_bytes;
@@ -410,6 +411,7 @@ process_data(
     r_bytes -= RATE;
   }
 
+  // process last message block, it can be full/ partially filled
   size_t b_off = d_len - r_bytes;
 
   const size_t rb_full_words = r_bytes >> 2;
@@ -458,6 +460,7 @@ process_text(uint32_t* const __restrict state,    // permutation state
   uint32_t buffer0[RATE_W + 1];
   uint32_t buffer1[RATE_W];
 
+  // process full message blocks, except last one ( even if that's full )
   size_t r_bytes = ct_len;
   while (r_bytes > RATE) {
     const size_t b_off = ct_len - r_bytes;
@@ -474,6 +477,7 @@ process_text(uint32_t* const __restrict state,    // permutation state
     r_bytes -= RATE;
   }
 
+  // process last message block, it can be full/ partially filled
   size_t b_off = ct_len - r_bytes;
 
   const size_t rb_full_words = r_bytes >> 2;
@@ -529,6 +533,7 @@ process_cipher(
   uint32_t buffer0[RATE_W + 1];
   uint32_t buffer1[RATE_W];
 
+  // process full message blocks, except last one ( even if that's full )
   size_t r_bytes = ct_len;
   while (r_bytes > RATE) {
     const size_t b_off = ct_len - r_bytes;
@@ -545,6 +550,7 @@ process_cipher(
     r_bytes -= RATE;
   }
 
+  // process last message block, it can be full/ partially filled
   size_t b_off = ct_len - r_bytes;
 
   const size_t rb_full_words = r_bytes >> 2;
@@ -568,6 +574,7 @@ process_cipher(
   sparkle_utils::copy_words_to_le_bytes(buffer1, dec + b_off, r_bytes);
   b_off += rb_full_bytes;
 
+  // in case last message block is not full
   if (r_bytes < RATE) {
     std::memset(buffer1 + rb_full_words, 0, RATE - rb_full_bytes);
 
@@ -576,7 +583,9 @@ process_cipher(
     buffer1[rb_full_words] = word;
 
     rho1<RATE>(state, buffer1);
-  } else {
+  }
+  // when last message block is full
+  else {
     rhoprime1<RATE>(state, buffer0);
   }
 
